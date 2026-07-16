@@ -1,171 +1,337 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>居中标题网页</title>
-  <!-- 引入Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 引入Font Awesome图标 -->
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  
-  <!-- 配置Tailwind自定义颜色和字体 -->
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#3B82F6', // 主色调：蓝色
-            secondary: '#10B981', // 辅助色：绿色
-            dark: '#1F2937', // 深色
-            light: '#F3F4F6', // 浅色
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-          },
-        },
-      }
-    }
-  </script>
-  
-  <!-- 自定义工具类 -->
-  <style type="text/tailwindcss">
-    @layer utilities {
-      .content-auto {
-        content-visibility: auto;
-      }
-      .text-shadow {
-        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      }
-      .transition-custom {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>团队成员</title>
+    <style>
+        /* ===== 全局 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            padding: 50px 20px;
+        }
+
+        /* ===== 标题 ===== */
+        .page-title {
+            text-align: center;
+            color: #fff;
+            font-size: 44px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(100, 100, 255, 0.3);
+        }
+        .page-sub {
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 16px;
+            margin-bottom: 45px;
+            letter-spacing: 2px;
+        }
+
+        /* ===== 卡片网格 ===== */
+        .team-grid {
+            max-width: 1300px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 30px;
+        }
+
+        /* ===== 单张卡片 ===== */
+        .member-card {
+            background: rgba(255,255,255,0.07);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 24px;
+            padding: 28px 16px 22px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .member-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(255,255,255,0.25);
+            box-shadow: 0 20px 60px rgba(80, 80, 255, 0.25);
+        }
+
+        .member-card .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #2a2a4a;
+            border: 3px solid rgba(255,255,255,0.2);
+            transition: border 0.3s;
+            margin-bottom: 14px;
+        }
+        .member-card:hover .avatar {
+            border-color: #7c7cff;
+        }
+
+        .member-card .name {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .member-card .role {
+            color: rgba(255,255,255,0.55);
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        .member-card .badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 4px 18px;
+            border-radius: 20px;
+            background: rgba(124, 124, 255, 0.2);
+            color: #b0b0ff;
+            font-size: 12px;
+            border: 1px solid rgba(124, 124, 255, 0.15);
+        }
+
+        /* ===== 弹窗 ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #1e1e3a;
+            max-width: 620px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 28px;
+            padding: 35px 30px 30px;
+            border: 1px solid rgba(255,255,255,0.10);
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            animation: modalIn 0.35s ease;
+            position: relative;
+        }
+        @keyframes modalIn {
+            0% { transform: scale(0.92) translateY(30px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .modal-close {
+            position: sticky;
+            top: 0;
+            float: right;
+            font-size: 32px;
+            color: rgba(255,255,255,0.4);
+            cursor: pointer;
+            background: none;
+            border: none;
+            transition: color 0.2s;
+            line-height: 1;
+            z-index: 10;
+        }
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        .modal-avatar {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #7c7cff;
+            background: #2a2a4a;
+            display: block;
+            margin: 0 auto 14px;
+        }
+
+        .modal-name {
+            text-align: center;
+            color: #fff;
+            font-size: 30px;
+            font-weight: 700;
+        }
+        .modal-role {
+            text-align: center;
+            color: #7c7cff;
+            font-size: 17px;
+            margin-bottom: 18px;
+            letter-spacing: 1px;
+        }
+
+        .modal-body {
+            color: rgba(255,255,255,0.85);
+            font-size: 15px;
+            line-height: 1.9;
+            background: rgba(255,255,255,0.04);
+            border-radius: 16px;
+            padding: 20px 22px;
+            border-left: 3px solid #7c7cff;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .modal-body strong {
+            color: #b0b0ff;
+        }
+
+        /* ===== 滚动条美化 ===== */
+        .modal-box::-webkit-scrollbar {
+            width: 4px;
+        }
+        .modal-box::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .modal-box::-webkit-scrollbar-thumb {
+            background: #7c7cff;
+            border-radius: 10px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 600px) {
+            .page-title { font-size: 28px; }
+            .team-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+            .member-card { padding: 18px 10px 16px; }
+            .member-card .avatar { width: 80px; height: 80px; }
+            .member-card .name { font-size: 17px; }
+            .modal-box { padding: 24px 16px; }
+        }
+        @media (max-width: 400px) {
+            .team-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-  <!-- 导航栏 -->
-  <nav class="bg-white shadow-md fixed w-full z-50 transition-custom">
-    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <i class="fa fa-cube text-primary text-2xl"></i>
-        <span class="font-bold text-xl text-dark">WebCenter</span>
-      </div>
-      <div class="hidden md:flex space-x-6">
-        <a href="#" class="text-gray-600 hover:text-primary transition-custom">首页</a>
-        <a href="#" class="text-gray-600 hover:text-primary transition-custom">服务</a>
-        <a href="#" class="text-gray-600 hover:text-primary transition-custom">关于</a>
-        <a href="#" class="text-gray-600 hover:text-primary transition-custom">联系</a>
-      </div>
-      <button class="md:hidden text-gray-600 focus:outline-none">
-        <i class="fa fa-bars text-xl"></i>
-      </button>
+<body>
+
+    <!-- ===== 标题 ===== -->
+    <div class="page-title">✨ 核心团队</div>
+    <div class="page-sub">点击头像 · 查看完整介绍</div>
+
+    <!-- ===== 卡片容器 ===== -->
+    <div class="team-grid" id="teamGrid"></div>
+
+    <!-- ===== 弹窗 ===== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <button class="modal-close" id="modalClose">✕</button>
+            <img class="modal-avatar" id="modalAvatar" src="" alt="头像">
+            <div class="modal-name" id="modalName">姓名</div>
+            <div class="modal-role" id="modalRole">职位</div>
+            <div class="modal-body" id="modalBody">介绍文字</div>
+        </div>
     </div>
-  </nav>
 
-  <!-- 主内容区 -->
-  <main class="container mx-auto px-4 pt-24 pb-16">
-    <!-- 居中标题区域 -->
-    <section class="py-12 md:py-20 text-center">
-      <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-dark mb-4 text-shadow">
-        这是一个居中的标题
-      </h1>
-      <p class="text-gray-600 text-lg md:text-xl max-w-3xl mx-auto mb-8">
-        这个网页展示了如何使用Tailwind CSS创建一个标题居中的现代网页设计，
-        包含响应式布局和精美的视觉效果，
-      </p>
-      <div class="flex flex-col sm:flex-row justify-center gap-4 mt-8">
-        <button class="px-6 py-3 bg-primary text-white rounded-lg shadow-lg hover:bg-primary/90 transition-custom transform hover:-translate-y-1">
-          <i class="fa fa-rocket mr-2"></i>开始探索
-        </button>
-        <button class="px-6 py-3 bg-white text-primary border border-primary rounded-lg shadow-md hover:bg-gray-50 transition-custom transform hover:-translate-y-1">
-          <i class="fa fa-info-circle mr-2"></i>了解更多
-        </button>
-      </div>
-    </section>
+    <script>
+        // ============================================================
+        //  ★★★ 数据区：在这里添加 / 修改成员信息 ★★★
+        //  格式：每一条用 { } 包起来，中间用逗号分隔
+        //  添加新人：复制 { } 里面全部内容，粘贴到上一个 } 后面，加逗号
+        // ============================================================
+        const members = [
+            {
+                name: '张伟',
+                role: '技术总监 · 架构师',
+                avatar: 'images/team1.jpg',
+                bio: '▸ 15年互联网技术经验，曾任职于阿里、字节跳动核心研发团队。\n▸ 主导过日活千万级系统的架构设计与重构，擅长高并发、微服务、云原生。\n▸ 热爱技术布道，内部培训超过200场，培养出多位技术骨干。\n▸ 业余爱好：骑行、摄影、开源社区贡献者。'
+            },
+            {
+                name: '李娜',
+                role: '产品总监 · 用户体验',
+                avatar: 'images/team2.jpg',
+                bio: '▸ 8年产品设计经验，前腾讯高级产品经理。\n▸ 负责过3款从0到1的产品，累计服务用户超5000万。\n▸ 擅长用户洞察、数据驱动决策、敏捷迭代。\n▸ 多次获得公司年度创新奖，拥有5项产品设计相关专利。\n▸ 业余爱好：阅读、旅行、心理学研究。'
+            },
+            {
+                name: '王强',
+                role: '全栈开发 · 技术专家',
+                avatar: 'images/team3.jpg',
+                bio: '▸ 精通 Python / Java / Go / Vue / React 等多栈技术。\n▸ 6年全栈开发经验，独立完成过电商、CMS、低代码平台等项目。\n▸ 代码洁癖患者，团队代码规范与质量把控人。\n▸ 活跃于GitHub开源社区，维护3个千星项目。\n▸ 业余爱好：写技术博客、弹吉他、做饭。'
+            },
+            {
+                name: '赵雪',
+                role: 'UI/UX 设计主管',
+                avatar: 'images/team4.jpg',
+                bio: '▸ 7年数字产品设计经验，曾任小米设计团队核心成员。\n▸ 主导过智能硬件、SaaS平台、移动应用等多形态产品设计。\n▸ 擅长设计系统搭建、交互创新、用户行为分析。\n▸ 作品多次入选站酷、Behance首页推荐。\n▸ 业余爱好：手绘、逛展、收集黑胶唱片。'
+            },
+            {
+                name: '陈明',
+                role: '运营负责人 · 增长专家',
+                avatar: 'images/team5.jpg',
+                bio: '▸ 10年运营经验，从0搭建过多个百万级用户社群。\n▸ 擅长内容生态建设、用户增长策略、品牌IP打造。\n▸ 曾操盘3个千万级流量活动，ROI最高达到1:8。\n▸ 对用户心理有深刻洞察，擅长用运营驱动产品迭代。\n▸ 业余爱好：马拉松、茶道、写短篇小说。'
+            }
+        ];
 
-    <!-- 特色卡片区域 -->
-    <section class="py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-custom transform hover:-translate-y-1">
-        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-          <i class="fa fa-paint-brush text-primary text-xl"></i>
-        </div>
-        <h3 class="text-xl font-semibold mb-3">现代设计</h3>
-        <p class="text-gray-600">使用Tailwind CSS v3实现的现代化界面，具有流畅的动画和视觉层次。</p>
-      </div>
-      
-      <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-custom transform hover:-translate-y-1">
-        <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mb-4">
-          <i class="fa fa-mobile text-secondary text-xl"></i>
-        </div>
-        <h3 class="text-xl font-semibold mb-3">响应式布局</h3>
-        <p class="text-gray-600">在任何设备上都能完美展示，从手机到桌面电脑都有出色的用户体验。</p>
-      </div>
-      
-      <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-custom transform hover:-translate-y-1">
-        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-          <i class="fa fa-bolt text-primary text-xl"></i>
-        </div>
-        <h3 class="text-xl font-semibold mb-3">高性能</h3>
-        <p class="text-gray-600">优化的代码结构和资源加载，确保网页加载速度快且运行流畅。</p>
-      </div>
-    </section>
+        // ============================================================
+        //  ★★★ 以下代码不用动，自动生成卡片和弹窗 ★★★
+        // ============================================================
 
-    <!-- 图片区域 -->
-    <section class="py-12">
-      <div class="bg-gray-100 rounded-2xl overflow-hidden shadow-xl">
-        <img src="https://picsum.photos/id/1039/1200/600" alt="精美设计示例" class="w-full h-auto object-cover">
-      </div>
-    </section>
-  </main>
+        const grid = document.getElementById('teamGrid');
+        const overlay = document.getElementById('modalOverlay');
+        const closeBtn = document.getElementById('modalClose');
+        const mAvatar = document.getElementById('modalAvatar');
+        const mName = document.getElementById('modalName');
+        const mRole = document.getElementById('modalRole');
+        const mBody = document.getElementById('modalBody');
 
-  <!-- 页脚 -->
-  <footer class="bg-dark text-white py-8">
-    <div class="container mx-auto px-4">
-      <div class="flex flex-col md:flex-row justify-between items-center">
-        <div class="mb-4 md:mb-0">
-          <div class="flex items-center space-x-2">
-            <i class="fa fa-cube text-primary text-2xl"></i>
-            <span class="font-bold text-xl">WebCenter</span>
-          </div>
-          <p class="text-gray-400 mt-2">打造精美的现代网页</p>
-        </div>
-        
-        <div class="flex space-x-6">
-          <a href="#" class="text-gray-400 hover:text-white transition-custom">
-            <i class="fa fa-github text-xl"></i>
-          </a>
-          <a href="#" class="text-gray-400 hover:text-white transition-custom">
-            <i class="fa fa-twitter text-xl"></i>
-          </a>
-          <a href="#" class="text-gray-400 hover:text-white transition-custom">
-            <i class="fa fa-linkedin text-xl"></i>
-          </a>
-          <a href="#" class="text-gray-400 hover:text-white transition-custom">
-            <i class="fa fa-instagram text-xl"></i>
-          </a>
-        </div>
-      </div>
-      
-      <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
-        &copy; 2023 WebCenter. 保留所有权利。
-      </div>
-    </div>
-  </footer>
+        // 渲染卡片
+        members.forEach((m, i) => {
+            const card = document.createElement('div');
+            card.className = 'member-card';
+            card.innerHTML = `
+                <img class="avatar" src="${m.avatar}" alt="${m.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%232a2a4a%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2240%22 font-family=%22sans-serif%22%3E${m.name[0]}%3C/text%3E%3C/svg%3E'">
+                <div class="name">${m.name}</div>
+                <div class="role">${m.role}</div>
+                <div class="badge">点击查看 →</div>
+            `;
+            card.addEventListener('click', () => openModal(i));
+            grid.appendChild(card);
+        });
 
-  <!-- JavaScript -->
-  <script>
-    // 导航栏滚动效果
-    window.addEventListener('scroll', function() {
-      const nav = document.querySelector('nav');
-      if (window.scrollY > 10) {
-        nav.classList.add('bg-white/95', 'backdrop-blur-sm');
-        nav.classList.remove('bg-white');
-      } else {
-        nav.classList.remove('bg-white/95', 'backdrop-blur-sm');
-        nav.classList.add('bg-white');
-      }
-    });
-  </script>
+        function openModal(index) {
+            const m = members[index];
+            if (!m) return;
+            mAvatar.src = m.avatar;
+            mAvatar.onerror = function() {
+                this.src = `data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%232a2a4a%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2240%22 font-family=%22sans-serif%22%3E${m.name[0]}%3C/text%3E%3C/svg%3E`;
+            };
+            mName.textContent = m.name;
+            mRole.textContent = m.role;
+            mBody.textContent = m.bio;
+            overlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        closeBtn.addEventListener('click', closeModal);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+
 </body>
 </html>
