@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>居中标题网页</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome图标 -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义颜色和字体 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6', // 主色调：蓝色
+            secondary: '#10B981', // 辅助色：绿色
+            dark: '#1F2937', // 深色
+            light: '#F3F4F6', // 浅色
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .transition-custom {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- 导航栏 -->
+  <nav class="bg-white shadow-md fixed w-full z-50 transition-custom">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-cube text-primary text-2xl"></i>
+        <span class="font-bold text-xl text-dark">WebCenter</span>
+      </div>
+      <div class="hidden md:flex space-x-6">
+        <a href="#" class="text-gray-600 hover:text-primary transition-custom">首页</a>
+        <a href="#" class="text-gray-600 hover:text-primary transition-custom">服务</a>
+        <a href="#" class="text-gray-600 hover:text-primary transition-custom">关于</a>
+        <a href="#" class="text-gray-600 hover:text-primary transition-custom">联系</a>
+      </div>
+      <button class="md:hidden text-gray-600 focus:outline-none">
+        <i class="fa fa-bars text-xl"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 主内容区 -->
+  <main class="container mx-auto px-4 pt-24 pb-16">
+    <!-- 居中标题区域 -->
+    <section class="py-12 md:py-20 text-center">
+      <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-dark mb-4 text-shadow">
+        这是一个居中的标题
+      </h1>
+      <p class="text-gray-600 text-lg md:text-xl max-w-3xl mx-auto mb-8">
+        这个网页展示了如何使用Tailwind CSS创建一个标题居中的现代网页设计，
+        包含响应式布局和精美的视觉效果，
+      </p>
+      <div class="flex flex-col sm:flex-row justify-center gap-4 mt-8">
+        <button class="px-6 py-3 bg-primary text-white rounded-lg shadow-lg hover:bg-primary/90 transition-custom transform hover:-translate-y-1">
+          <i class="fa fa-rocket mr-2"></i>开始探索
+        </button>
+        <button class="px-6 py-3 bg-white text-primary border border-primary rounded-lg shadow-md hover:bg-gray-50 transition-custom transform hover:-translate-y-1">
+          <i class="fa fa-info-circle mr-2"></i>了解更多
+        </button>
+      </div>
+    </section>
+
+    <!-- 特色卡片区域 -->
+    <section class="py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-custom transform hover:-translate-y-1">
+        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+          <i class="fa fa-paint-brush text-primary text-xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold mb-3">现代设计</h3>
+        <p class="text-gray-600">使用Tailwind CSS v3实现的现代化界面，具有流畅的动画和视觉层次。</p>
+      </div>
+      
+      <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-custom transform hover:-translate-y-1">
+        <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mb-4">
+          <i class="fa fa-mobile text-secondary text-xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold mb-3">响应式布局</h3>
+        <p class="text-gray-600">在任何设备上都能完美展示，从手机到桌面电脑都有出色的用户体验。</p>
+      </div>
+      
+      <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-custom transform hover:-translate-y-1">
+        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+          <i class="fa fa-bolt text-primary text-xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold mb-3">高性能</h3>
+        <p class="text-gray-600">优化的代码结构和资源加载，确保网页加载速度快且运行流畅。</p>
+      </div>
+    </section>
+
+    <!-- 图片区域 -->
+    <section class="py-12">
+      <div class="bg-gray-100 rounded-2xl overflow-hidden shadow-xl">
+        <img src="https://picsum.photos/id/1039/1200/600" alt="精美设计示例" class="w-full h-auto object-cover">
+      </div>
+    </section>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-dark text-white py-8">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <div class="flex items-center space-x-2">
+            <i class="fa fa-cube text-primary text-2xl"></i>
+            <span class="font-bold text-xl">WebCenter</span>
+          </div>
+          <p class="text-gray-400 mt-2">打造精美的现代网页</p>
+        </div>
+        
+        <div class="flex space-x-6">
+          <a href="#" class="text-gray-400 hover:text-white transition-custom">
+            <i class="fa fa-github text-xl"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-white transition-custom">
+            <i class="fa fa-twitter text-xl"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-white transition-custom">
+            <i class="fa fa-linkedin text-xl"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-white transition-custom">
+            <i class="fa fa-instagram text-xl"></i>
+          </a>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+        &copy; 2023 WebCenter. 保留所有权利。
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script>
+    // 导航栏滚动效果
+    window.addEventListener('scroll', function() {
+      const nav = document.querySelector('nav');
+      if (window.scrollY > 10) {
+        nav.classList.add('bg-white/95', 'backdrop-blur-sm');
+        nav.classList.remove('bg-white');
+      } else {
+        nav.classList.remove('bg-white/95', 'backdrop-blur-sm');
+        nav.classList.add('bg-white');
+      }
+    });
+  </script>
+</body>
+</html>
