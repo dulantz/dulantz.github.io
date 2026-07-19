@@ -1,339 +1,240 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="icon" href="images/favicon.png" type="image/png">
-    <title>秦格1</title>
-    <style>
-        /* ===== 全局 ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            min-height: 100vh;
-            padding: 50px 20px;
-        }
-
-        /* ===== 标题 ===== */
-        .page-title {
-            text-align: center;
-            color: #fff;
-            font-size: 44px;
-            font-weight: 700;
-            letter-spacing: 4px;
-            margin-bottom: 10px;
-            text-shadow: 0 0 30px rgba(100, 100, 255, 0.3);
-        }
-        .page-sub {
-            text-align: center;
-            color: rgba(255,255,255,0.6);
-            font-size: 16px;
-            margin-bottom: 45px;
-            letter-spacing: 2px;
-        }
-
-        /* ===== 卡片网格 ===== */
-        .team-grid {
-            max-width: 1300px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 30px;
-        }
-
-        /* ===== 单张卡片 ===== */
-        .member-card {
-            background: rgba(255,255,255,0.07);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.10);
-            border-radius: 24px;
-            padding: 28px 16px 22px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        .member-card:hover {
-            transform: translateY(-12px) scale(1.02);
-            background: rgba(255,255,255,0.14);
-            border-color: rgba(255,255,255,0.25);
-            box-shadow: 0 20px 60px rgba(80, 80, 255, 0.25);
-        }
-
-        .member-card .avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            background: #2a2a4a;
-            border: 3px solid rgba(255,255,255,0.2);
-            transition: border 0.3s;
-            margin-bottom: 14px;
-        }
-        .member-card:hover .avatar {
-            border-color: #7c7cff;
-        }
-
-        .member-card .name {
-            color: #fff;
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-        .member-card .role {
-            color: rgba(255,255,255,0.55);
-            font-size: 14px;
-            letter-spacing: 1px;
-        }
-        .member-card .badge {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 4px 18px;
-            border-radius: 20px;
-            background: rgba(124, 124, 255, 0.2);
-            color: #b0b0ff;
-            font-size: 12px;
-            border: 1px solid rgba(124, 124, 255, 0.15);
-        }
-
-        /* ===== 弹窗 ===== */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        .modal-overlay.show {
-            display: flex;
-        }
-
-        .modal-box {
-            background: #1e1e3a;
-            max-width: 620px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            border-radius: 28px;
-            padding: 35px 30px 30px;
-            border: 1px solid rgba(255,255,255,0.10);
-            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
-            animation: modalIn 0.35s ease;
-            position: relative;
-        }
-        @keyframes modalIn {
-            0% { transform: scale(0.92) translateY(30px); opacity: 0; }
-            100% { transform: scale(1) translateY(0); opacity: 1; }
-        }
-
-        .modal-close {
-            position: sticky;
-            top: 0;
-            float: right;
-            font-size: 32px;
-            color: rgba(255,255,255,0.4);
-            cursor: pointer;
-            background: none;
-            border: none;
-            transition: color 0.2s;
-            line-height: 1;
-            z-index: 10;
-        }
-        .modal-close:hover {
-            color: #fff;
-        }
-
-        .modal-avatar {
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid #7c7cff;
-            background: #2a2a4a;
-            display: block;
-            margin: 0 auto 14px;
-        }
-
-        .modal-name {
-            text-align: center;
-            color: #fff;
-            font-size: 30px;
-            font-weight: 700;
-        }
-        .modal-role {
-            text-align: center;
-            color: #7c7cff;
-            font-size: 17px;
-            margin-bottom: 18px;
-            letter-spacing: 1px;
-        }
-
-        .modal-body {
-            color: rgba(255,255,255,0.85);
-            font-size: 15px;
-            line-height: 1.9;
-            background: rgba(255,255,255,0.04);
-            border-radius: 16px;
-            padding: 20px 22px;
-            border-left: 3px solid #7c7cff;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-        .modal-body strong {
-            color: #b0b0ff;
-        }
-
-        /* ===== 滚动条美化 ===== */
-        .modal-box::-webkit-scrollbar {
-            width: 4px;
-        }
-        .modal-box::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .modal-box::-webkit-scrollbar-thumb {
-            background: #7c7cff;
-            border-radius: 10px;
-        }
-
-        /* ===== 响应式 ===== */
-        @media (max-width: 600px) {
-            .page-title { font-size: 28px; }
-            .team-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-            .member-card { padding: 18px 10px 16px; }
-            .member-card .avatar { width: 80px; height: 80px; }
-            .member-card .name { font-size: 17px; }
-            .modal-box { padding: 24px 16px; }
-        }
-        @media (max-width: 400px) {
-            .team-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>成员展示站</title>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #0b1023, #172341); color: #f6f7fb; }
+    .page { max-width: 1080px; margin: 0 auto; }
+    .hero { background: rgba(255,255,255,0.08); padding: 20px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.12); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .hero h1 { margin: 0 0 8px; font-size: 28px; }
+    .hero p { line-height: 1.7; color: #dce7ff; margin: 0; }
+    .btn { border: none; border-radius: 999px; padding: 8px 12px; background: linear-gradient(135deg, #5ec8ff, #7d95ff); color: #05111d; font-weight: 700; cursor: pointer; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
+    .card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 16px; cursor: pointer; }
+    .card:hover { background: rgba(255,255,255,0.14); }
+    .avatar { width: 70px; height: 70px; border-radius: 16px; overflow: hidden; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.12); }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .name { font-size: 20px; margin: 0 0 4px; }
+    .role { color: #9ecbff; margin: 0 0 8px; }
+    .bio { color: #e7efff; line-height: 1.7; }
+    .overlay { position: fixed; inset: 0; background: rgba(2,6,18,0.82); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
+    .overlay.show { display: flex; }
+    .modal { width: min(700px, 100%); background: #10172c; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 18px; }
+    .close { float: right; border: none; background: transparent; color: white; font-size: 24px; cursor: pointer; }
+    .field { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: white; margin-top: 8px; }
+    .field::placeholder { color: #9fb8ff; }
+    .comment-list { margin-top: 12px; display: grid; gap: 8px; }
+    .comment-item { padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.06); }
+    .small { color: #8fb3ff; font-size: 13px; margin-top: 8px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .create-bar { display: flex; justify-content: flex-end; margin-top: 14px; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .hero { flex-direction: column; align-items: flex-start; } .create-bar { justify-content: flex-start; } }
+  </style>
 </head>
 <body>
-
-    <!-- ===== 标题 ===== -->
-    <div class="page-title">都是牛逼</div>
-    <div class="page-sub">点击卡片 · 查看完整介绍</div>
-
-    <!-- ===== 卡片容器 ===== -->
-    <div class="team-grid" id="teamGrid"></div>
-
-    <!-- ===== 弹窗 ===== -->
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal-box">
-            <button class="modal-close" id="modalClose">✕</button>
-            <img class="modal-avatar" id="modalAvatar" src="" alt="头像">
-            <div class="modal-name" id="modalName">姓名</div>
-            <div class="modal-role" id="modalRole">职位</div>
-            <div class="modal-body" id="modalBody">介绍文字</div>
-        </div>
+  <div class="page">
+    <div class="hero">
+      <div>
+        <h1>2-106</h1>
+        <p>支持所有。</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="manageBtn">管理</button>
+      </div>
     </div>
 
-    <script>
-        // ============================================================
-        //  ★★★ 数据区：在这里填写成员信息 ★★★
-        //  名字已经写好，你只需在 '' 里填内容
-        //  role = 职位 / 标签
-        //  bio  = 详细介绍，想写多长写多长，换行用 \n
-        // ============================================================
-        const members = [
-            {
-                name: '张艺洁',
-                role: '牛逼',   // ← 在这里填职位
-                avatar: 'images/team1.jpg',
-                bio: '一股一户亲谷类洗吧'     // ← 在这里填详细介绍
-            },
-            {
-                name: '孙国零',
-                role: '私人',   // ← 在这里填职位
-                avatar: 'images/team2.jpg',
-                bio: '还是感觉后果脚后跟经过和结果就宏观经济概况i库公司v李素芬hi思路胡管理和韩国人四平公司山桂花开了三个四个婚礼'     // ← 在这里填详细介绍
-            },
-            {
-                name: '王瑞天',
-                role: '吃寿司',   // ← 在这里填职位
-                avatar: 'images/team3.jpg',
-                bio: '世博i哦i哦ii哦i哦i哦i哦'     // ← 在这里填详细介绍
-            },
-            {
-                name: '而非合格考生',
-                role: '',   // ← 在这里填职位
-                avatar: 'images/team.jpg',
-                bio: '贱婢'     // ← 在这里填详细介绍
-            },
-            {
-                name: '刘子涵',
-                role: '',   // ← 在这里填职位
-                avatar: 'images/team5.jpg',
-                bio: '李乐乐'     // ← 在这里填详细介绍
-            }
-        ];
+    <div class="create-bar">
+      <button class="btn" id="createBtn">创建成员</button>
+    </div>
 
-        // ============================================================
-        //  ★★★ 以下代码不用动，自动生成卡片和弹窗 ★★★
-        // ============================================================
+    <div class="grid" id="memberGrid"></div>
+  </div>
 
-        const grid = document.getElementById('teamGrid');
-        const overlay = document.getElementById('modalOverlay');
-        const closeBtn = document.getElementById('modalClose');
-        const mAvatar = document.getElementById('modalAvatar');
-        const mName = document.getElementById('modalName');
-        const mRole = document.getElementById('modalRole');
-        const mBody = document.getElementById('modalBody');
+  <div class="overlay" id="profileOverlay">
+    <div class="modal">
+      <button class="close" id="closeBtn" aria-label="关闭">×</button>
+      <h2 id="modalTitle">成员详情</h2>
+      <p id="modalRole"></p>
+      <p id="modalBio"></p>
+      <div style="margin-top: 12px;">
+        <input class="field" id="commentAuthor" placeholder="你的名字" />
+        <textarea class="field" id="commentText" rows="4" placeholder="写下你的评论"></textarea>
+        <button class="btn" id="sendCommentBtn" style="margin-top: 8px;">发送评论</button>
+        <div class="comment-list" id="commentList"></div>
+      </div>
+    </div>
+  </div>
 
-        // 渲染卡片
-        members.forEach((m, i) => {
-            const card = document.createElement('div');
-            card.className = 'member-card';
-            card.innerHTML = `
-                <img class="avatar" src="${m.avatar}" alt="${m.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%232a2a4a%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2240%22 font-family=%22sans-serif%22%3E${m.name[0]}%3C/text%3E%3C/svg%3E'">
-                <div class="name">${m.name}</div>
-                <div class="role">${m.role}</div>
-                <div class="badge">点击查看 →</div>
-            `;
-            card.addEventListener('click', () => openModal(i));
-            grid.appendChild(card);
-        });
+  <div class="overlay" id="createOverlay">
+    <div class="modal">
+      <button class="close" id="closeCreateBtn" aria-label="关闭">×</button>
+      <h2>创建成员</h2>
+      <input class="field" id="createName" placeholder="姓名" />
+      <input class="field" id="createRole" placeholder="职位" />
+      <input class="field" id="createAvatarUrl" placeholder="头像地址，例如 images/team1234.png" />
+      <input class="field" id="createAvatarFile" type="file" accept="image/png,image/jpeg,image/jpg" />
+      <textarea class="field" id="createBio" rows="4" placeholder="简介"></textarea>
+      <button class="btn" id="saveCreateBtn" style="margin-top: 8px;">保存成员</button>
+    </div>
+  </div>
 
-        function openModal(index) {
-            const m = members[index];
-            if (!m) return;
-            mAvatar.src = m.avatar;
-            mAvatar.onerror = function() {
-                this.src = `data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%232a2a4a%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2240%22 font-family=%22sans-serif%22%3E${m.name[0]}%3C/text%3E%3C/svg%3E`;
-            };
-            mName.textContent = m.name;
-            mRole.textContent = m.role;
-            mBody.textContent = m.bio;
-            overlay.classList.add('show');
-            document.body.style.overflow = 'hidden';
+  <script>
+    const STORAGE_MEMBERS = 'site_members';
+    const STORAGE_COMMENTS = 'site_comments';
+    const defaultMembers = [
+      { id: 'member-1', name: '小雪', role: 'UI 设计师', bio: '喜欢用颜色和动效讲故事，让内容看起来更有温度。', avatar: 'images/team1234.png', hidden: false },
+      { id: 'member-2', name: '可可', role: '前端开发', bio: '负责把想法变成页面，并把交互做得更自然。', avatar: 'images/team5678.jpg', hidden: false }
+    ];
+    let members = [];
+    let comments = [];
+    let activeMemberId = null;
+
+    function loadState() {
+      try {
+        const savedMembers = JSON.parse(localStorage.getItem(STORAGE_MEMBERS));
+        const savedComments = JSON.parse(localStorage.getItem(STORAGE_COMMENTS));
+        members = Array.isArray(savedMembers) && savedMembers.length ? savedMembers : defaultMembers.slice();
+        comments = Array.isArray(savedComments) ? savedComments : [];
+      } catch (e) {
+        members = defaultMembers.slice();
+        comments = [];
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_MEMBERS, JSON.stringify(members));
+      localStorage.setItem(STORAGE_COMMENTS, JSON.stringify(comments));
+    }
+
+    function renderMembers() {
+      const grid = document.getElementById('memberGrid');
+      const visibleMembers = members.filter(member => !member.hidden);
+      grid.innerHTML = '';
+      if (!visibleMembers.length) {
+        grid.innerHTML = '<div class="card"><h2 class="name">暂无可显示成员</h2><p class="bio">后台可以先创建成员或取消隐藏。</p></div>';
+        return;
+      }
+      visibleMembers.forEach(member => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="avatar"><img src="${member.avatar || 'https://api.dicebear.com/6.x/fun-emoji/svg?seed=' + encodeURIComponent(member.name)}" alt="头像" /></div>
+          <h2 class="name">${member.name}</h2>
+          <p class="role">${member.role || '成员'}</p>
+          <p class="bio">${member.bio || '暂无简介'}</p>
+        `;
+        card.addEventListener('click', () => openProfile(member.id));
+        grid.appendChild(card);
+      });
+    }
+
+    function openProfile(memberId) {
+      const member = members.find(item => item.id === memberId);
+      if (!member || member.hidden) return;
+      activeMemberId = memberId;
+      document.getElementById('modalTitle').textContent = member.name;
+      document.getElementById('modalRole').textContent = member.role || '成员';
+      document.getElementById('modalBio').textContent = member.bio || '暂无简介';
+      renderComments();
+      document.getElementById('profileOverlay').classList.add('show');
+      document.getElementById('commentAuthor').value = '';
+      document.getElementById('commentText').value = '';
+    }
+
+    function closeProfile() {
+      activeMemberId = null;
+      document.getElementById('profileOverlay').classList.remove('show');
+    }
+
+    function renderComments() {
+      const list = document.getElementById('commentList');
+      const memberComments = comments.filter(item => item.memberId === activeMemberId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      if (!memberComments.length) {
+        list.innerHTML = '<div class="comment-item">暂无评论，欢迎留言。</div>';
+        return;
+      }
+      list.innerHTML = '';
+      memberComments.forEach(item => {
+        const node = document.createElement('div');
+        node.className = 'comment-item';
+        node.innerHTML = `<strong>${item.author}</strong><div class="small">${new Date(item.createdAt).toLocaleString()}</div><div>${item.text}</div>`;
+        list.appendChild(node);
+      });
+    }
+
+    function sendComment() {
+      if (!activeMemberId) return;
+      const author = document.getElementById('commentAuthor').value.trim() || '访客';
+      const text = document.getElementById('commentText').value.trim();
+      if (!text) {
+        alert('请输入评论内容');
+        return;
+      }
+      comments.push({ id: 'comment-' + Date.now(), memberId: activeMemberId, author, text, createdAt: new Date().toISOString() });
+      saveState();
+      renderComments();
+      document.getElementById('commentAuthor').value = '';
+      document.getElementById('commentText').value = '';
+    }
+
+    function openCreateOverlay() {
+      document.getElementById('createName').value = '';
+      document.getElementById('createRole').value = '';
+      document.getElementById('createAvatarUrl').value = '';
+      document.getElementById('createAvatarFile').value = '';
+      document.getElementById('createBio').value = '';
+      document.getElementById('createOverlay').classList.add('show');
+    }
+
+    function closeCreateOverlay() {
+      document.getElementById('createOverlay').classList.remove('show');
+    }
+
+    function readImageFile(file) {
+      return new Promise((resolve) => {
+        if (!file) {
+          resolve('');
+          return;
         }
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result || '');
+        reader.readAsDataURL(file);
+      });
+    }
 
-        function closeModal() {
-            overlay.classList.remove('show');
-            document.body.style.overflow = '';
-        }
+    async function saveNewMember() {
+      const name = document.getElementById('createName').value.trim();
+      if (!name) {
+        alert('请输入姓名');
+        return;
+      }
+      const file = document.getElementById('createAvatarFile').files[0];
+      const avatarUrl = document.getElementById('createAvatarUrl').value.trim();
+      const avatar = file ? await readImageFile(file) : avatarUrl;
+      const newMember = { id: 'member-' + Date.now(), name, role: document.getElementById('createRole').value.trim(), bio: document.getElementById('createBio').value.trim(), avatar: avatar || 'https://api.dicebear.com/6.x/fun-emoji/svg?seed=' + encodeURIComponent(name), hidden: false };
+      members.unshift(newMember);
+      saveState();
+      renderMembers();
+      closeCreateOverlay();
+    }
 
-        closeBtn.addEventListener('click', closeModal);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeModal();
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
-        });
-    </script>
+    document.getElementById('createBtn').addEventListener('click', openCreateOverlay);
+    document.getElementById('manageBtn').addEventListener('click', () => window.location.href = 'admin.html');
+    document.getElementById('closeBtn').addEventListener('click', closeProfile);
+    document.getElementById('closeCreateBtn').addEventListener('click', closeCreateOverlay);
+    document.getElementById('sendCommentBtn').addEventListener('click', sendComment);
+    document.getElementById('saveCreateBtn').addEventListener('click', saveNewMember);
+    document.getElementById('profileOverlay').addEventListener('click', (event) => {
+      if (event.target === document.getElementById('profileOverlay')) closeProfile();
+    });
+    document.getElementById('createOverlay').addEventListener('click', (event) => {
+      if (event.target === document.getElementById('createOverlay')) closeCreateOverlay();
+    });
 
+    loadState();
+    renderMembers();
+  </script>
 </body>
 </html>
