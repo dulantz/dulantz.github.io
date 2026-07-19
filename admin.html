@@ -8,8 +8,13 @@
     body { font-family: "Microsoft YaHei", sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #0b1023, #172341); color: #f6f7fb; }
     .page { max-width: 1100px; margin: 0 auto; }
     .card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 16px; margin-bottom: 16px; }
+    .panel-card { padding: 0; overflow: hidden; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .panel-body { padding: 16px; }
+    .panel-collapsed .panel-body { display: none; }
     .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
     .btn { border: none; border-radius: 999px; padding: 8px 12px; background: linear-gradient(135deg, #5ec8ff, #7d95ff); color: #05111d; font-weight: 700; cursor: pointer; }
+    .btn.small { padding: 6px 10px; font-size: 13px; }
     .field { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: white; margin-top: 8px; }
     .row { padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.06); margin-top: 8px; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
@@ -31,7 +36,7 @@
     <div class="topbar">
       <div>
         <h1 style="margin: 0;">管理员后台</h1>
-        <div class="small">默认账号：你猜猜 / 密码：你猜猜</div>
+        <div class="small">默认账号：1111111 / 密码：7777777</div>
       </div>
       <div class="actions">
         <a class="btn" href="index.html" style="text-decoration: none; display: inline-block;">返回首页</a>
@@ -47,18 +52,36 @@
     </div>
 
     <div id="adminPanel" class="hidden">
-      <div class="card">
-        <div class="toolbar">
-          <input class="field" id="memberSearch" placeholder="搜索成员姓名、职位、简介" />
-          <button class="btn" id="addMemberBtn">创建成员</button>
+      <div class="card panel-card" id="membersPanel">
+        <div class="panel-head">
+          <div>
+            <strong>成员管理</strong>
+            <div class="small">点击收起或展开成员列表</div>
+          </div>
+          <button class="btn small" data-toggle-panel="members">收起</button>
         </div>
-        <div class="expandable" id="membersList"></div>
+        <div class="panel-body">
+          <div class="toolbar">
+            <input class="field" id="memberSearch" placeholder="搜索成员姓名、职位、简介" />
+            <button class="btn" id="addMemberBtn">创建成员</button>
+          </div>
+          <div class="expandable" id="membersList"></div>
+        </div>
       </div>
-      <div class="card">
-        <div class="toolbar">
-          <input class="field" id="commentSearch" placeholder="搜索评论内容或作者" />
+      <div class="card panel-card" id="commentsPanel">
+        <div class="panel-head">
+          <div>
+            <strong>评论管理</strong>
+            <div class="small">点击收起或展开留言列表</div>
+          </div>
+          <button class="btn small" data-toggle-panel="comments">收起</button>
         </div>
-        <div class="expandable" id="commentsList"></div>
+        <div class="panel-body">
+          <div class="toolbar">
+            <input class="field" id="commentSearch" placeholder="搜索评论内容或作者" />
+          </div>
+          <div class="expandable" id="commentsList"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -99,6 +122,7 @@
     let members = [];
     let comments = [];
     let editingId = null;
+    const panelState = { members: false, comments: false };
 
     function loadState() {
       try {
@@ -123,6 +147,21 @@
       document.getElementById('loginPanel').classList.toggle('hidden', isLoggedIn());
       document.getElementById('adminPanel').classList.toggle('hidden', !isLoggedIn());
       document.getElementById('logoutBtn').classList.toggle('hidden', !isLoggedIn());
+    }
+
+    function renderPanelState() {
+      Object.entries(panelState).forEach(([name, collapsed]) => {
+        const panel = document.getElementById(`${name}Panel`);
+        const button = panel?.querySelector('[data-toggle-panel]');
+        if (!panel || !button) return;
+        panel.classList.toggle('panel-collapsed', collapsed);
+        button.textContent = collapsed ? '展开' : '收起';
+      });
+    }
+
+    function togglePanel(name) {
+      panelState[name] = !panelState[name];
+      renderPanelState();
     }
 
     function getFilteredMembers() {
@@ -303,6 +342,12 @@
     document.getElementById('commentSearch').addEventListener('input', renderComments);
 
     document.addEventListener('click', (event) => {
+      const panelToggle = event.target.closest('[data-toggle-panel]');
+      if (panelToggle) {
+        event.preventDefault();
+        togglePanel(panelToggle.getAttribute('data-toggle-panel'));
+        return;
+      }
       const button = event.target.closest('button[data-action]');
       if (!button) return;
       const action = button.getAttribute('data-action');
@@ -315,6 +360,7 @@
 
     loadState();
     renderAuth();
+    renderPanelState();
     if (isLoggedIn()) {
       renderMembers();
       renderComments();
