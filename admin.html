@@ -1,119 +1,220 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>管理员后台</title>
+  <title>管理后台</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <style>
-    :root { --bg:#07111f; --panel:rgba(255,255,255,.06); --border:rgba(255,255,255,.12); --text:#f2f6ff; --muted:#adc0ff; --accent:#7da3ff; --accent-2:#ff8ea2; }
-    * { box-sizing:border-box; margin:0; padding:0; }
-    body { font-family:"Microsoft YaHei",sans-serif; background:linear-gradient(135deg,#07111f 0%,#0d1630 45%,#16223e 100%); color:var(--text); min-height:100vh; padding:16px 12px 36px; }
-    .page { max-width:1080px; margin:0 auto; }
-    .topbar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:16px 18px; background:var(--panel); border:1px solid var(--border); border-radius:20px; margin-bottom:14px; }
-    .topbar button, .topbar a { border:none; border-radius:999px; padding:8px 12px; background:rgba(255,255,255,.08); color:white; cursor:pointer; text-decoration:none; }
-    .card { background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:16px; margin-bottom:14px; }
-    .card h2 { margin-bottom:10px; font-size:1.08rem; }
-    .login-box { max-width:460px; margin:30px auto 0; background:var(--panel); border:1px solid var(--border); border-radius:22px; padding:18px; }
-    .login-box input { width:100%; margin-bottom:10px; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:white; outline:none; }
-    .login-box button { width:100%; padding:10px 12px; border:none; border-radius:999px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#07111f; font-weight:700; cursor:pointer; }
-    .tool-row { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
-    .tool-row input { flex:1; min-width:220px; padding:9px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:white; outline:none; }
-    .tool-row button { border:none; border-radius:999px; padding:8px 12px; background:rgba(255,255,255,.08); color:white; cursor:pointer; }
-    .list { display:grid; gap:10px; }
-    .row { padding:12px 14px; border-radius:14px; background:rgba(7,14,30,.92); border:1px solid rgba(255,255,255,.08); display:grid; gap:6px; }
-    .actions { display:flex; gap:8px; flex-wrap:wrap; }
-    .row button { border:none; border-radius:999px; padding:7px 10px; background:rgba(255,255,255,.08); color:white; cursor:pointer; }
-    .row small { color:var(--muted); line-height:1.6; }
-    .hint { color:var(--muted); font-size:13px; }
-    .empty { color:var(--muted); padding:8px 0; }
-    .hidden { display:none !important; }
-    @media (max-width:760px) { .topbar { flex-direction:column; align-items:flex-start; } }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: "Microsoft YaHei", sans-serif; background: #0b1023; color: #f6f7fb; padding: 30px 20px; min-height:100vh; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .header { background: rgba(255,255,255,0.06); padding: 16px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .header h1 { font-size: 22px; }
+    .btn { border: none; border-radius: 999px; padding: 8px 18px; background: linear-gradient(135deg, #5ec8ff, #7d95ff); color: #05111d; font-weight: 700; cursor: pointer; font-size: 14px; }
+    .btn-danger { background: rgba(255,80,80,0.2); color: #ff8a8a; }
+    .btn-edit { background: rgba(124,124,255,0.2); color: #b0b0ff; }
+    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+    .card h2 { font-size: 17px; margin-bottom: 12px; color: #9ecbff; }
+    .field { width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #fff; margin-bottom: 8px; font-size: 14px; }
+    .field::placeholder { color: #5a6f9a; }
+    .member-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 6px; flex-wrap: wrap; gap: 8px; }
+    .member-item .info { flex:1; min-width:120px; }
+    .member-item .info strong { color: #fff; }
+    .member-item .info small { color: #7a8fc0; }
+    .actions { display: flex; gap: 6px; }
+    .edit-form { display: none; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; margin-bottom: 8px; }
+    .edit-form.show { display: block; }
+    .status { color: #8bffb0; margin-top: 8px; font-size: 14px; }
+    .back-link { color: #5a6f9a; text-decoration: none; font-size: 14px; }
+    .back-link:hover { color: #9ecbff; }
+    .empty { color: #5a6f9a; text-align: center; padding: 20px 0; }
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="topbar">
-      <div>
-        <div style="font-size:1.15rem;">管理员后台</div>
-        <div class="hint">固定账号：admin / 密码：123456</div>
-      </div>
-      <div>
-        <a href="index.html">返回首页</a>
-        <button id="logoutBtn" class="hidden">退出登录</button>
-      </div>
+  <div class="container">
+    <div class="header">
+      <h1>⚙️ 管理后台</h1>
+      <button class="btn" id="logoutBtn">退出</button>
     </div>
 
-    <div id="loginSection">
-      <div class="login-box">
-        <h2>管理员登录</h2>
-        <input id="adminUser" type="text" placeholder="账号" />
-        <input id="adminPass" type="password" placeholder="密码" />
-        <button id="loginBtn">登录</button>
-        <p class="hint" style="margin-top:10px;">登录后可搜索成员、查看评论，并删除或编辑简介。</p>
-      </div>
+    <div class="card">
+      <h2>➕ 添加成员</h2>
+      <input class="field" id="inputName" placeholder="姓名（必填）" />
+      <input class="field" id="inputRole" placeholder="职位" />
+      <input class="field" id="inputAvatar" placeholder="头像链接" />
+      <input class="field" id="inputBio" placeholder="简介" />
+      <button class="btn" id="addBtn">添加</button>
+      <div class="status" id="addStatus"></div>
     </div>
 
-    <div id="adminSection" class="hidden">
-      <div class="card">
-        <h2>成员管理</h2>
-        <div class="tool-row">
-          <input id="memberSearch" type="text" placeholder="搜索成员名字或简介" />
-          <button id="toggleMembersBtn">收起/展开</button>
-        </div>
-        <div id="membersList" class="list"></div>
-      </div>
-      <div class="card">
-        <h2>评论管理</h2>
-        <div class="tool-row">
-          <input id="commentSearch" type="text" placeholder="搜索评论内容或作者" />
-          <button id="toggleCommentsBtn">收起/展开</button>
-        </div>
-        <div id="commentsList" class="list"></div>
-      </div>
+    <div class="card">
+      <h2>📋 成员列表</h2>
+      <div id="memberList"><div class="empty">加载中...</div></div>
     </div>
+
+    <div class="card">
+      <h2>💬 评论列表</h2>
+      <div id="commentList"><div class="empty">加载中...</div></div>
+    </div>
+
+    <a href="index.html" class="back-link">← 返回首页</a>
   </div>
 
   <script>
-    const STORAGE_MEMBERS = 'site_members';
-    const STORAGE_COMMENTS = 'site_comments';
-    const supabase = window.supabase && window.supabase.createClient ? window.supabase.createClient('https://khnzvvyrpylcfhrqjycq.supabase.co','sb_publishable_riAyjeT5yOXWNllLhj3E2w_cnFcSGwa') : null;
+    // ============================================================
+    //  config.js 已经加载了 supabase 对象
+    // ============================================================
+
     let members = [];
     let comments = [];
-    let showMembers = true;
-    let showComments = true;
 
-    function loadLocalMembers(){ const raw=localStorage.getItem(STORAGE_MEMBERS); return raw ? JSON.parse(raw) : []; }
-    function loadLocalComments(){ const raw=localStorage.getItem(STORAGE_COMMENTS); return raw ? JSON.parse(raw) : []; }
-    function saveLocalMembers(){ localStorage.setItem(STORAGE_MEMBERS, JSON.stringify(members)); }
-    function saveLocalComments(){ localStorage.setItem(STORAGE_COMMENTS, JSON.stringify(comments)); }
+    async function loadMembers() {
+      const { data, error } = await supabase.from('members').select('*').order('created_at', { ascending: true });
+      if (error) { console.error(error); return []; }
+      return data || [];
+    }
 
-    async function loadMembers(){ if (supabase) { try { const {data,error}=await supabase.from('members').select('*').order('created_at',{ascending:false}); if (!error && data) { members=data; saveLocalMembers(); return members; } } catch(e){} } members=loadLocalMembers(); return members; }
-    async function loadComments(){ if (supabase) { try { const {data,error}=await supabase.from('comments').select('*').order('created_at',{ascending:false}); if (!error && data) { comments=data; saveLocalComments(); return comments; } } catch(e){} } comments=loadLocalComments(); return comments; }
+    async function loadComments() {
+      const { data, error } = await supabase.from('comments').select('*').order('created_at', { ascending: false });
+      if (error) { console.error(error); return []; }
+      return data || [];
+    }
 
-    function isLoggedIn(){ return sessionStorage.getItem('admin_login') === 'true'; }
-    function renderAuth(){ document.getElementById('loginSection').classList.toggle('hidden', isLoggedIn()); document.getElementById('adminSection').classList.toggle('hidden', !isLoggedIn()); document.getElementById('logoutBtn').classList.toggle('hidden', !isLoggedIn()); }
+    async function refresh() {
+      members = await loadMembers();
+      comments = await loadComments();
+      renderMembers();
+      renderComments();
+    }
 
-    function getFilteredMembers(){ const key=document.getElementById('memberSearch').value.trim().toLowerCase(); if (!key) return members; return members.filter(item => `${item.name}${item.bio}${item.role}`.toLowerCase().includes(key)); }
-    function getFilteredComments(){ const key=document.getElementById('commentSearch').value.trim().toLowerCase(); if (!key) return comments; return comments.filter(item => `${item.author}${item.text}`.toLowerCase().includes(key)); }
+    function renderMembers() {
+      const list = document.getElementById('memberList');
+      if (!members.length) {
+        list.innerHTML = '<div class="empty">暂无成员</div>';
+        return;
+      }
+      let html = '';
+      members.forEach(m => {
+        html += `
+          <div class="member-item">
+            <div class="info">
+              <strong>${m.name}</strong>
+              <small>${m.role || '成员'}</small>
+              <br /><small>${m.bio ? m.bio.slice(0, 40) + (m.bio.length > 40 ? '...' : '') : ''}</small>
+            </div>
+            <div class="actions">
+              <button class="btn btn-edit" onclick="startEdit('${m.id}')">编辑</button>
+              <button class="btn btn-danger" onclick="deleteMember('${m.id}')">删除</button>
+            </div>
+          </div>
+          <div class="edit-form" id="editForm_${m.id}">
+            <input class="field" id="editName_${m.id}" value="${m.name || ''}" placeholder="姓名" />
+            <input class="field" id="editRole_${m.id}" value="${m.role || ''}" placeholder="职位" />
+            <input class="field" id="editAvatar_${m.id}" value="${m.avatar_url || ''}" placeholder="头像链接" />
+            <input class="field" id="editBio_${m.id}" value="${m.bio || ''}" placeholder="简介" />
+            <button class="btn" onclick="saveEdit('${m.id}')">保存</button>
+            <button class="btn btn-danger" onclick="cancelEdit('${m.id}')">取消</button>
+          </div>
+        `;
+      });
+      list.innerHTML = html;
+    }
 
-    function renderMembers(){ const list=getFilteredMembers(); document.getElementById('membersList').innerHTML=''; if (!showMembers) { document.getElementById('membersList').innerHTML='<div class="empty">已收起成员列表</div>'; return; } if (!list.length) { document.getElementById('membersList').innerHTML='<div class="empty">暂无匹配成员</div>'; return; } list.forEach(member=>{ const row=document.createElement('div'); row.className='row'; const count=comments.filter(item=>item.member_id===member.id).length; row.innerHTML=`<strong>${member.name}</strong><small>${member.role||'未填写职位'}</small><small>${member.bio||'暂无简介'}</small><small>评论数：${count}</small><div class="actions"><button class="edit-btn">修改简介</button><button class="delete-btn">删除成员</button></div>`; row.querySelector('.edit-btn').addEventListener('click',()=>editBio(member.id)); row.querySelector('.delete-btn').addEventListener('click',()=>deleteMember(member.id)); document.getElementById('membersList').appendChild(row); }); }
+    function renderComments() {
+      const list = document.getElementById('commentList');
+      if (!comments.length) {
+        list.innerHTML = '<div class="empty">暂无评论</div>';
+        return;
+      }
+      let html = '';
+      comments.forEach(c => {
+        const m = members.find(x => x.id === c.member_id);
+        const name = m ? m.name : '已删除';
+        html += `
+          <div class="member-item">
+            <div class="info">
+              <strong>${c.author || '匿名'}</strong> → ${name}
+              <br /><small>${c.content}</small>
+              <br /><small style="color:#5a6f9a;font-size:12px;">${new Date(c.created_at).toLocaleString()}</small>
+            </div>
+            <button class="btn btn-danger" onclick="deleteComment('${c.id}')">删除</button>
+          </div>
+        `;
+      });
+      list.innerHTML = html;
+    }
 
-    function renderComments(){ const list=getFilteredComments(); document.getElementById('commentsList').innerHTML=''; if (!showComments) { document.getElementById('commentsList').innerHTML='<div class="empty">已收起评论列表</div>'; return; } if (!list.length) { document.getElementById('commentsList').innerHTML='<div class="empty">暂无匹配评论</div>'; return; } list.forEach(comment=>{ const member=members.find(item=>item.id===comment.member_id); const row=document.createElement('div'); row.className='row'; row.innerHTML=`<strong>${comment.author}</strong><small>${member?member.name:'已删除成员'}</small><small>${comment.text}</small><small>${new Date(comment.created_at).toLocaleString()}</small><div class="actions"><button class="delete-comment">删除评论</button></div>`; row.querySelector('.delete-comment').addEventListener('click',()=>deleteComment(comment.id)); document.getElementById('commentsList').appendChild(row); }); }
+    window.startEdit = function(id) {
+      document.getElementById('editForm_' + id).classList.add('show');
+    };
 
-    async function deleteMember(memberId){ if (!confirm('确认删除这个成员？')) return; comments=comments.filter(item=>item.member_id!==memberId); members=members.filter(item=>item.id!==memberId); saveLocalMembers(); saveLocalComments(); if (supabase) { try { await supabase.from('comments').delete().eq('member_id', memberId); await supabase.from('members').delete().eq('id', memberId); } catch(e){} } renderMembers(); renderComments(); }
-    async function deleteComment(commentId){ if (!confirm('确认删除这条评论？')) return; comments=comments.filter(item=>item.id!==commentId); saveLocalComments(); if (supabase) { try { await supabase.from('comments').delete().eq('id', commentId); } catch(e){} } renderComments(); }
-    async function editBio(memberId){ const member=members.find(item=>item.id===memberId); if (!member) return; const value=prompt('请输入新的简介：', member.bio||''); if (value===null) return; member.bio=value.trim(); saveLocalMembers(); if (supabase) { try { await supabase.from('members').update({ bio:member.bio }).eq('id', memberId); } catch(e){} } renderMembers(); }
+    window.cancelEdit = function(id) {
+      document.getElementById('editForm_' + id).classList.remove('show');
+    };
 
-    document.getElementById('loginBtn').addEventListener('click', () => { if (document.getElementById('adminUser').value.trim()==='admin' && document.getElementById('adminPass').value.trim()==='123456') { sessionStorage.setItem('admin_login','true'); renderAuth(); init(); } else { alert('账号或密码错误'); } });
-    document.getElementById('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('admin_login'); renderAuth(); });
-    document.getElementById('toggleMembersBtn').addEventListener('click', ()=>{ showMembers=!showMembers; renderMembers(); });
-    document.getElementById('toggleCommentsBtn').addEventListener('click', ()=>{ showComments=!showComments; renderComments(); });
-    document.getElementById('memberSearch').addEventListener('input', renderMembers);
-    document.getElementById('commentSearch').addEventListener('input', renderComments);
+    window.saveEdit = async function(id) {
+      const name = document.getElementById('editName_' + id).value.trim();
+      if (!name) { alert('姓名不能为空'); return; }
+      const role = document.getElementById('editRole_' + id).value.trim();
+      const bio = document.getElementById('editBio_' + id).value.trim();
+      const avatar_url = document.getElementById('editAvatar_' + id).value.trim();
+      const { error } = await supabase.from('members').update({
+        name,
+        role: role || null,
+        bio: bio || null,
+        avatar_url: avatar_url || null
+      }).eq('id', id);
+      if (error) { alert('修改失败：' + error.message); return; }
+      document.getElementById('editForm_' + id).classList.remove('show');
+      refresh();
+    };
 
-    async function init(){ members=await loadMembers(); comments=await loadComments(); renderMembers(); renderComments(); }
-    renderAuth(); if (isLoggedIn()) init();
+    window.deleteMember = async function(id) {
+      if (!confirm('删除此成员及其所有评论？')) return;
+      await supabase.from('comments').delete().eq('member_id', id);
+      const { error } = await supabase.from('members').delete().eq('id', id);
+      if (error) { alert('删除失败：' + error.message); return; }
+      refresh();
+    };
+
+    window.deleteComment = async function(id) {
+      if (!confirm('删除此评论？')) return;
+      const { error } = await supabase.from('comments').delete().eq('id', id);
+      if (error) { alert('删除失败：' + error.message); return; }
+      refresh();
+    };
+
+    document.getElementById('addBtn').addEventListener('click', async function() {
+      const name = document.getElementById('inputName').value.trim();
+      const role = document.getElementById('inputRole').value.trim();
+      const bio = document.getElementById('inputBio').value.trim();
+      const avatar_url = document.getElementById('inputAvatar').value.trim();
+      const status = document.getElementById('addStatus');
+      if (!name) { status.textContent = '⚠️ 请填写姓名'; return; }
+      status.textContent = '⏳ 提交中...';
+      const { error } = await supabase.from('members').insert([{
+        id: 'member-' + Date.now(),
+        name,
+        role: role || null,
+        bio: bio || null,
+        avatar_url: avatar_url || null
+      }]);
+      if (error) { status.textContent = '❌ ' + error.message; return; }
+      status.textContent = '✅ 添加成功！';
+      document.getElementById('inputName').value = '';
+      document.getElementById('inputRole').value = '';
+      document.getElementById('inputBio').value = '';
+      document.getElementById('inputAvatar').value = '';
+      refresh();
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+      window.location.href = 'index.html';
+    });
+
+    refresh();
   </script>
 </body>
 </html>
