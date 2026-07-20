@@ -1,38 +1,86 @@
-const { createClient } = require('@supabase/supabase-js');
+const { createClient } = require("@supabase/supabase-js");
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
-const sb = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 exports.handler = async (event) => {
-  const { method, path, queryStringParameters, body } = event;
-  const table = path.replace('/.netlify/functions/proxy/', '');
+    const { httpMethod, path, queryStringParameters, body } = event;
 
-  try {
-    let res;
-    if (method === 'GET') {
-      res = await sb.from(table).select('*').order(queryStringParameters?.order || 'created_at', { ascending: queryStringParameters?.asc !== 'false' });
-    } else if (method === 'POST') {
-      const data = JSON.parse(body);
-      res = await sb.from(table).insert(data);
-    } else if (method === 'PATCH') {
-      const data = JSON.parse(body);
-      const id = queryStringParameters.id;
-      res = await sb.from(table).update(data).eq('id', id);
-    } else if (method === 'DELETE') {
-      const id = queryStringParameters.id;
-      res = await sb.from(table).delete().eq('id', id);
+    // 跨域头
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    };
+
+    // 预检请求
+    if (httpMethod === 'OPTIONS') {
+        return { statusCode: 204, headers };
     }
 
-    return {
-      statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify(res)
-    };
-  } catch (err) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: err.message })
-    };
-  }
+    // 从路径中提取表名：/api/members → members
+    const table = path.replace('/api/', '');
+
+    try {
+        let result;
+
+        if (httpMethod === 'GET') {
+            // 查询数据
+            const { data, error } = await supabase
+                .from(table)
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+            }
+            result = data;
+
+        } else if (httpMethod === 'POST') {
+            // 插入数据
+            const payload = JSON.parse(body);
+            const { data, error } = await supabase
+                .from(table)
+                .insert([payload])
+                .select();
+
+            if (error) {
+                return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+            }
+            result = data;
+
+        } else if (httpMethod === 'DELETE') {
+            // 删除数据
+            const id = queryStringParameters?.id;
+            if (!id) {
+                return { statusCode: 400, headers, body: JSON.stringify({ error: '缺少 id 参数' }) };
+            }
+            const { error } = await supabase
+                .from(table)
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+            }
+            result = { success: true };
+
+        } else {
+            return { statusCode: 405, headers, body: JSON.stringify({ error: '方法不支持' }) };
+        }
+
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify(result),
+        };
+
+    } catch (err) {
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: err.message }),
+        };
+    }
 };
