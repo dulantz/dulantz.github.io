@@ -10,33 +10,28 @@
     .page { max-width:1080px; margin:0 auto; }
     .hero { background:rgba(255,255,255,0.08); padding:20px; border-radius:18px; border:1px solid rgba(255,255,255,0.12); display:flex; justify-content:space-between; align-items:center; gap:12px; }
     .hero h1 { font-size:28px; }
+    .hero p { line-height:1.7; color:#dce7ff; margin:0; }
     .btn { border:none; border-radius:999px; padding:8px 20px; background:linear-gradient(135deg,#5ec8ff,#7d95ff); color:#05111d; font-weight:700; cursor:pointer; font-size:14px; }
-    .btn-secondary { background:rgba(255,255,255,0.1); color:#fff; }
     .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:18px; }
     .card { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:18px; padding:16px; cursor:pointer; transition:0.3s; }
     .card:hover { background:rgba(255,255,255,0.14); transform:translateY(-2px); }
-    .avatar { width:70px; height:70px; border-radius:16px; overflow:hidden; margin-bottom:10px; border:1px solid rgba(255,255,255,0.12); background:#1e2a4a; display:flex; align-items:center; justify-content:center; font-size:28px; }
+    .avatar { width:70px; height:70px; border-radius:16px; overflow:hidden; margin-bottom:10px; border:1px solid rgba(255,255,255,0.12); }
+    .avatar img { width:100%; height:100%; object-fit:cover; }
     .name { font-size:20px; margin-bottom:4px; }
     .role { color:#9ecbff; margin-bottom:8px; }
-    .bio { color:#e7efff; line-height:1.7; font-size:14px; }
+    .bio { color:#e7efff; line-height:1.7; }
     .overlay { position:fixed; inset:0; background:rgba(2,6,18,0.82); display:none; align-items:center; justify-content:center; padding:16px; z-index:100; }
     .overlay.show { display:flex; }
     .modal { width:min(700px,100%); background:#10172c; border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:18px; max-height:90vh; overflow-y:auto; }
     .close { float:right; border:none; background:transparent; color:white; font-size:24px; cursor:pointer; }
-    .field { width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.05); color:white; margin-top:8px; font-family:inherit; }
+    .field { width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.05); color:white; margin-top:8px; }
     .field::placeholder { color:#9fb8ff; }
     .comment-list { margin-top:12px; display:grid; gap:8px; }
     .comment-item { padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.06); }
-    .comment-item .comment-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
     .small { color:#8fb3ff; font-size:13px; }
     .actions { display:flex; gap:10px; flex-wrap:wrap; }
     .create-bar { display:flex; justify-content:flex-end; margin-top:14px; }
     .status { color:#8bffb0; margin-top:8px; font-size:14px; }
-    .status.error { color:#ff8b8b; }
-    .my-badge { display:inline-block; background:linear-gradient(135deg,#5ec8ff,#7d95ff); color:#05111d; font-size:11px; padding:2px 8px; border-radius:999px; margin-left:6px; font-weight:700; }
-    .edit-section { margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.1); }
-    .edit-section h3 { margin-bottom:6px; font-size:16px; }
-    textarea.field { resize:vertical; min-height:80px; }
     @media (max-width:760px){ .grid{ grid-template-columns:1fr; } .hero{ flex-direction:column; align-items:flex-start; } .create-bar{ justify-content:flex-start; } }
   </style>
 </head>
@@ -48,12 +43,12 @@
         <p>支持所有。</p>
       </div>
       <div class="actions">
-        <button class="btn btn-secondary" id="manageBtn">⚙️ 管理</button>
+        <button class="btn" id="manageBtn">⚙️ 管理</button>
       </div>
     </div>
 
     <div class="create-bar">
-      <button class="btn" id="createBtn">➕ 创建我的卡片</button>
+      <button class="btn" id="createBtn">➕ 创建</button>
     </div>
 
     <div class="grid" id="memberGrid"></div>
@@ -64,23 +59,11 @@
     <div class="modal">
       <button class="close" id="closeBtn">×</button>
       <h2 id="modalTitle">成员详情</h2>
-      <p id="modalRole" style="color:#9ecbff; margin-top:4px;"></p>
-      <p id="modalBio" style="margin-top:8px; line-height:1.7;"></p>
-
-      <div class="edit-section" id="editSection" style="display:none;">
-        <h3>✏️ 编辑我的资料</h3>
-        <input class="field" id="editName" placeholder="姓名" />
-        <input class="field" id="editRole" placeholder="职位/特长" />
-        <input class="field" id="editAvatar" placeholder="头像链接（可选）" />
-        <textarea class="field" id="editBio" rows="3" placeholder="简介"></textarea>
-        <button class="btn" id="saveEditBtn" style="margin-top:8px;">保存修改</button>
-        <div class="status" id="editStatus"></div>
-      </div>
-
-      <div style="margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.1);">
-        <h3 style="margin-bottom:6px;">💬 评论区</h3>
+      <p id="modalRole"></p>
+      <p id="modalBio"></p>
+      <div style="margin-top:12px;">
         <input class="field" id="commentAuthor" placeholder="你的名字" />
-        <textarea class="field" id="commentText" rows="3" placeholder="写下你的评论"></textarea>
+        <textarea class="field" id="commentText" rows="4" placeholder="写下你的评论"></textarea>
         <button class="btn" id="sendCommentBtn" style="margin-top:8px;">发送评论</button>
         <div class="comment-list" id="commentList"></div>
       </div>
@@ -91,126 +74,96 @@
   <div class="overlay" id="createOverlay">
     <div class="modal">
       <button class="close" id="closeCreateBtn">×</button>
-      <h2>📝 创建我的卡片</h2>
-      <p class="small" style="margin-top:6px;">每人只能创建一张卡片哦</p>
+      <h2>📝 创建成员</h2>
       <input class="field" id="createName" placeholder="姓名（必填）" />
-      <input class="field" id="createRole" placeholder="职位/特长" />
+      <input class="field" id="createRole" placeholder="职位" />
       <input class="field" id="createAvatar" placeholder="头像链接（可选）" />
       <textarea class="field" id="createBio" rows="4" placeholder="简介"></textarea>
-      <button class="btn" id="saveCreateBtn" style="margin-top:8px;">保存创建</button>
+      <button class="btn" id="saveCreateBtn" style="margin-top:8px;">保存成员</button>
       <div class="status" id="createStatus"></div>
     </div>
   </div>
 
   <script>
-    // 生成设备唯一标识
-    function getDeviceId() {
-      let did = localStorage.getItem('device_id');
-      if (!did) {
-        did = 'dev-' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
-        localStorage.setItem('device_id', did);
-      }
-      return did;
-    }
-    const myDeviceId = getDeviceId();
+    // ============================================================
+    //  调用 Netlify 云函数 API（不再直接连 Supabase）
+    // ============================================================
 
-    // 统一代理请求函数，对接Netlify服务端函数
-    async function proxyFetch(table, method, payload = null, query = {}) {
-      let url = `/.netlify/functions/proxy/${table}`;
-      const params = new URLSearchParams(query);
-      if ([...params].length > 0) url += `?${params.toString()}`;
-      const opt = {
-        method,
-        headers: { 'Content-Type': 'application/json' }
-      };
-      if (payload) opt.body = JSON.stringify(payload);
-      const res = await fetch(url, opt);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      return data;
-    }
+    const API_BASE = '/api';
 
     let members = [];
     let comments = [];
     let activeMemberId = null;
 
-    // 加载成员列表
+    // ============================================================
+    //  加载数据（通过云函数）
+    // ============================================================
     async function loadMembers() {
-      const res = await proxyFetch('members', 'GET');
-      return res.data || [];
+      try {
+        const res = await fetch(`${API_BASE}/members`);
+        if (!res.ok) {
+          console.error('加载成员失败：', res.status);
+          return [];
+        }
+        const data = await res.json();
+        return data || [];
+      } catch (err) {
+        console.error('加载成员出错：', err);
+        return [];
+      }
     }
 
-    // 加载全部评论
     async function loadComments() {
-      const res = await proxyFetch('comments', 'GET');
-      return res.data || [];
+      try {
+        const res = await fetch(`${API_BASE}/comments`);
+        if (!res.ok) {
+          console.error('加载评论失败：', res.status);
+          return [];
+        }
+        const data = await res.json();
+        return data || [];
+      } catch (err) {
+        console.error('加载评论出错：', err);
+        return [];
+      }
     }
 
-    // 刷新全部数据
+    // ============================================================
+    //  刷新
+    // ============================================================
     async function refreshAll() {
       members = await loadMembers();
       comments = await loadComments();
       renderMembers();
-      updateCreateButton();
       if (activeMemberId) {
         const m = members.find(x => x.id === activeMemberId);
         if (m) {
           document.getElementById('modalTitle').textContent = m.name;
           document.getElementById('modalRole').textContent = m.role || '成员';
           document.getElementById('modalBio').textContent = m.bio || '暂无简介';
-          const editSec = document.getElementById('editSection');
-          if (m.device_id === myDeviceId) {
-            editSec.style.display = 'block';
-            document.getElementById('editName').value = m.name || '';
-            document.getElementById('editRole').value = m.role || '';
-            document.getElementById('editAvatar').value = m.avatar_url || '';
-            document.getElementById('editBio').value = m.bio || '';
-          } else {
-            editSec.style.display = 'none';
-          }
         }
         renderComments();
       }
     }
 
-    function hasMyCard() {
-      return members.some(m => m.device_id === myDeviceId);
-    }
-
-    function updateCreateButton() {
-      const btn = document.getElementById('createBtn');
-      if (hasMyCard()) {
-        btn.textContent = '✅ 你已有卡片';
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-        btn.style.cursor = 'not-allowed';
-      } else {
-        btn.textContent = '➕ 创建我的卡片';
-        btn.disabled = false;
-        btn.style.opacity = '1';
-        btn.style.cursor = 'pointer';
-      }
-    }
-
-    // 渲染成员卡片
+    // ============================================================
+    //  渲染
+    // ============================================================
     function renderMembers() {
       const grid = document.getElementById('memberGrid');
       const visible = members.filter(m => !m.hidden);
       grid.innerHTML = '';
       if (!visible.length) {
-        grid.innerHTML = '<div class="card"><h2 class="name">暂无可显示成员</h2><p class="bio">点击"创建我的卡片"添加第一位成员。</p></div>';
+        grid.innerHTML = '<div class="card"><h2 class="name">暂无可显示成员</h2><p class="bio">点击"创建"添加新成员。</p></div>';
         return;
       }
       visible.forEach(member => {
         const card = document.createElement('div');
         card.className = 'card';
-        const isMine = member.device_id === myDeviceId;
-        const avatarHtml = member.avatar_url
-          ? `<img src="${member.avatar_url}" alt="头像" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='👤'" />`
-          : '👤';
+        const avatar = member.avatar_url || 'https://api.dicebear.com/6.x/fun-emoji/svg?seed=' + encodeURIComponent(member.name);
         card.innerHTML = `
-          <div class="avatar">${avatarHtml}</div>
-          <h2 class="name">${member.name}${isMine ? '<span class="my-badge">我</span>' : ''}</h2>
+          <div class="avatar"><img src="${avatar}" alt="头像" onerror="this.src='https://api.dicebear.com/6.x/fun-emoji/svg?seed=default'" /></div>
+          <h2 class="name">${member.name}</h2>
           <p class="role">${member.role || '成员'}</p>
           <p class="bio">${member.bio || '暂无简介'}</p>
         `;
@@ -219,53 +172,26 @@
       });
     }
 
-    // 渲染评论区
     function renderComments() {
       const list = document.getElementById('commentList');
       const filtered = comments.filter(c => c.member_id === activeMemberId);
       if (!filtered.length) {
-        list.innerHTML = '<div class="comment-item small">暂无评论，欢迎留言。</div>';
+        list.innerHTML = '<div class="comment-item">暂无评论，欢迎留言。</div>';
         return;
       }
       list.innerHTML = '';
       filtered.forEach(c => {
         const node = document.createElement('div');
         node.className = 'comment-item';
-        const isMine = c.device_id === myDeviceId;
-        let deleteBtn = '';
-        if (isMine) {
-          deleteBtn = `<button class="btn btn-secondary" style="padding:2px 10px; font-size:12px;" data-cid="${c.id}">删除</button>`;
-        }
-        node.innerHTML = `
-          <div class="comment-head">
-            <strong>${c.author || '匿名'}${isMine ? ' <span class="small">(我)</span>' : ''}</strong>
-            ${deleteBtn}
-          </div>
-          <div class="small">${new Date(c.created_at).toLocaleString()}</div>
-          <div style="margin-top:4px;">${c.content}</div>
-        `;
+        node.innerHTML =
+          `<strong>${c.author || '匿名'}</strong><div class="small">${new Date(c.created_at).toLocaleString()}</div><div>${c.content}</div>`;
         list.appendChild(node);
       });
-      list.querySelectorAll('button[data-cid]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          deleteComment(btn.dataset.cid);
-        });
-      });
     }
 
-    // 删除评论
-    async function deleteComment(commentId) {
-      if (!confirm('确定删除这条评论吗？')) return;
-      try {
-        await proxyFetch('comments', 'DELETE', null, { id: commentId });
-        refreshAll();
-      } catch (err) {
-        alert('删除失败：' + err.message);
-      }
-    }
-
-    // 打开成员详情弹窗
+    // ============================================================
+    //  打开详情
+    // ============================================================
     function openProfile(memberId) {
       const member = members.find(m => m.id === memberId);
       if (!member || member.hidden) return;
@@ -273,18 +199,6 @@
       document.getElementById('modalTitle').textContent = member.name;
       document.getElementById('modalRole').textContent = member.role || '成员';
       document.getElementById('modalBio').textContent = member.bio || '暂无简介';
-
-      const editSec = document.getElementById('editSection');
-      if (member.device_id === myDeviceId) {
-        editSec.style.display = 'block';
-        document.getElementById('editName').value = member.name || '';
-        document.getElementById('editRole').value = member.role || '';
-        document.getElementById('editAvatar').value = member.avatar_url || '';
-        document.getElementById('editBio').value = member.bio || '';
-      } else {
-        editSec.style.display = 'none';
-      }
-
       renderComments();
       document.getElementById('profileOverlay').classList.add('show');
     }
@@ -292,20 +206,17 @@
     function closeProfile() {
       activeMemberId = null;
       document.getElementById('profileOverlay').classList.remove('show');
-      document.getElementById('editStatus').textContent = '';
     }
 
+    // ============================================================
+    //  创建成员（通过云函数）
+    // ============================================================
     function openCreateOverlay() {
-      if (hasMyCard()) {
-        alert('你已经创建过卡片了，每人只能创建一张哦～');
-        return;
-      }
       document.getElementById('createName').value = '';
       document.getElementById('createRole').value = '';
       document.getElementById('createAvatar').value = '';
       document.getElementById('createBio').value = '';
       document.getElementById('createStatus').textContent = '';
-      document.getElementById('createStatus').className = 'status';
       document.getElementById('createOverlay').classList.add('show');
     }
 
@@ -313,12 +224,7 @@
       document.getElementById('createOverlay').classList.remove('show');
     }
 
-    // 创建新成员卡片
     async function saveNewMember() {
-      if (hasMyCard()) {
-        alert('你已经创建过卡片了！');
-        return;
-      }
       const name = document.getElementById('createName').value.trim();
       const role = document.getElementById('createRole').value.trim();
       const bio = document.getElementById('createBio').value.trim();
@@ -327,24 +233,31 @@
 
       if (!name) {
         status.textContent = '⚠️ 请填写姓名';
-        status.className = 'status error';
         return;
       }
 
       status.textContent = '⏳ 提交中...';
-      status.className = 'status';
 
-      const insertData = {
-        id: 'member-' + Date.now(),
-        name: name,
-        role: role || null,
-        bio: bio || null,
-        avatar_url: avatar_url || null,
-        hidden: false,
-        device_id: myDeviceId
-      };
       try {
-        await proxyFetch('members', 'POST', insertData);
+        const res = await fetch(`${API_BASE}/members`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: 'member-' + Date.now(),
+            name: name,
+            role: role || null,
+            bio: bio || null,
+            avatar_url: avatar_url || null,
+            hidden: false
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          status.textContent = '❌ ' + (err.error || '创建失败');
+          return;
+        }
+
         status.textContent = '✅ 创建成功！';
         setTimeout(() => {
           closeCreateOverlay();
@@ -352,53 +265,15 @@
         }, 600);
       } catch (err) {
         status.textContent = '❌ ' + err.message;
-        status.className = 'status error';
       }
     }
 
-    // 编辑保存资料
-    async function saveEdit() {
-      if (!activeMemberId) return;
-      const member = members.find(m => m.id === activeMemberId);
-      if (!member || member.device_id !== myDeviceId) {
-        alert('只能修改自己的卡片哦');
-        return;
-      }
-      const name = document.getElementById('editName').value.trim();
-      const role = document.getElementById('editRole').value.trim();
-      const bio = document.getElementById('editBio').value.trim();
-      const avatar_url = document.getElementById('editAvatar').value.trim();
-      const status = document.getElementById('editStatus');
-
-      if (!name) {
-        status.textContent = '⚠️ 姓名不能为空';
-        status.className = 'status error';
-        return;
-      }
-
-      status.textContent = '⏳ 保存中...';
-      status.className = 'status';
-      const updateData = {
-        name: name,
-        role: role || null,
-        bio: bio || null,
-        avatar_url: avatar_url || null
-      };
-      try {
-        await proxyFetch('members', 'PATCH', updateData, { id: activeMemberId });
-        status.textContent = '✅ 保存成功！';
-        setTimeout(() => { status.textContent = ''; }, 2000);
-        refreshAll();
-      } catch (err) {
-        status.textContent = '❌ ' + err.message;
-        status.className = 'status error';
-      }
-    }
-
-    // 发送评论
+    // ============================================================
+    //  评论（通过云函数）
+    // ============================================================
     async function sendComment() {
       if (!activeMemberId) {
-        alert('请先打开一个成员卡片');
+        alert('请先打开一个成员');
         return;
       }
       const author = document.getElementById('commentAuthor').value.trim() || '访客';
@@ -407,14 +282,24 @@
         alert('请输入评论内容');
         return;
       }
-      const commentData = {
-        member_id: activeMemberId,
-        author: author,
-        content: content,
-        device_id: myDeviceId
-      };
+
       try {
-        await proxyFetch('comments', 'POST', commentData);
+        const res = await fetch(`${API_BASE}/comments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            member_id: activeMemberId,
+            author: author,
+            content: content
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          alert('评论失败：' + (err.error || '未知错误'));
+          return;
+        }
+
         document.getElementById('commentText').value = '';
         refreshAll();
       } catch (err) {
@@ -422,21 +307,16 @@
       }
     }
 
-    // 绑定按钮事件
+    // ============================================================
+    //  事件绑定
+    // ============================================================
     document.getElementById('createBtn').addEventListener('click', openCreateOverlay);
-    document.getElementById('manageBtn').addEventListener('click', () => {
-      const pwd = prompt('请输入管理员密码：');
-      if (pwd) {
-        window.location.href = 'admin.html?pwd=' + encodeURIComponent(pwd);
-      }
-    });
+    document.getElementById('manageBtn').addEventListener('click', () => window.location.href = 'admin.html');
     document.getElementById('closeBtn').addEventListener('click', closeProfile);
     document.getElementById('closeCreateBtn').addEventListener('click', closeCreateOverlay);
     document.getElementById('sendCommentBtn').addEventListener('click', sendComment);
     document.getElementById('saveCreateBtn').addEventListener('click', saveNewMember);
-    document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
 
-    // 点击空白关闭弹窗
     document.getElementById('profileOverlay').addEventListener('click', (e) => {
       if (e.target === e.currentTarget) closeProfile();
     });
@@ -444,9 +324,11 @@
       if (e.target === e.currentTarget) closeCreateOverlay();
     });
 
-    // 页面初始化加载数据
+    // ============================================================
+    //  启动
+    // ============================================================
     refreshAll();
-    console.log('✅ 页面已启动，设备ID：', myDeviceId);
+    console.log('✅ 页面已启动（API 模式）');
   </script>
 </body>
 </html>
