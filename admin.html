@@ -4,59 +4,94 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>管理后台</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: "Microsoft YaHei", sans-serif; background: #0b1023; color: #f6f7fb; padding: 30px 20px; min-height:100vh; }
-    .container { max-width: 800px; margin: 0 auto; }
-    .header { background: rgba(255,255,255,0.06); padding: 16px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .header { background: rgba(255,255,255,0.06); padding: 16px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap:wrap; gap:10px; }
     .header h1 { font-size: 22px; }
-    .btn { border: none; border-radius: 999px; padding: 8px 18px; background: linear-gradient(135deg, #5ec8ff, #7d95ff); color: #05111d; font-weight: 700; cursor: pointer; font-size: 14px; }
+    .header .sub { color:#7a8fc0; font-size:14px; }
+    .btn { border: none; border-radius: 999px; padding: 8px 18px; background: linear-gradient(135deg, #5ec8ff, #7d95ff); color: #05111d; font-weight: 700; cursor: pointer; font-size: 14px; transition:0.3s; }
+    .btn:hover { transform:scale(1.03); opacity:0.9; }
     .btn-danger { background: rgba(255,80,80,0.2); color: #ff8a8a; }
+    .btn-danger:hover { background: rgba(255,80,80,0.35); }
     .btn-edit { background: rgba(124,124,255,0.2); color: #b0b0ff; }
+    .btn-edit:hover { background: rgba(124,124,255,0.35); }
+    .btn-success { background: linear-gradient(135deg, #00b894, #00a86b); color: #fff; }
     .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
     .card h2 { font-size: 17px; margin-bottom: 12px; color: #9ecbff; }
     .field { width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #fff; margin-bottom: 8px; font-size: 14px; }
     .field::placeholder { color: #5a6f9a; }
+    .field:focus { outline:none; border-color:#5ec8ff; }
     .member-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 6px; flex-wrap: wrap; gap: 8px; }
     .member-item .info { flex:1; min-width:120px; }
     .member-item .info strong { color: #fff; }
     .member-item .info small { color: #7a8fc0; }
-    .actions { display: flex; gap: 6px; }
-    .edit-form { display: none; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; margin-bottom: 8px; }
+    .member-item .info .bio-preview { color:#5a6f9a; font-size:13px; }
+    .actions { display: flex; gap: 6px; flex-wrap:wrap; }
+    .edit-form { display: none; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; margin-top: 8px; }
     .edit-form.show { display: block; }
     .status { color: #8bffb0; margin-top: 8px; font-size: 14px; }
-    .back-link { color: #5a6f9a; text-decoration: none; font-size: 14px; }
+    .status.error { color: #ff6b6b; }
+    .back-link { color: #5a6f9a; text-decoration: none; font-size: 14px; display:inline-block; margin-top:12px; }
     .back-link:hover { color: #9ecbff; }
     .empty { color: #5a6f9a; text-align: center; padding: 20px 0; }
+    .flex { display:flex; gap:8px; flex-wrap:wrap; }
+    .badge { font-size:11px; padding:2px 10px; border-radius:999px; background:rgba(94,200,255,0.15); color:#5ec8ff; }
+    .mt-8 { margin-top:8px; }
+    .comment-item { padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:8px; margin-bottom:4px; }
+    .comment-item .meta { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; }
+    .comment-item .author { color:#5ec8ff; font-weight:600; }
+    .comment-item .target { color:#7a8fc0; font-size:13px; }
+    .comment-item .time { color:#5a6f9a; font-size:12px; }
+    .comment-item .content { margin-top:4px; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media (max-width:600px){ .grid-2{ grid-template-columns:1fr; } .header{ flex-direction:column; align-items:flex-start; } }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- 头部 -->
     <div class="header">
-      <h1>⚙️ 管理后台</h1>
-      <button class="btn" id="logoutBtn">退出</button>
+      <div>
+        <h1>⚙️ 管理后台</h1>
+        <span class="sub">🔐 管理员模式 - 可修改所有成员和评论</span>
+      </div>
+      <div class="flex">
+        <button class="btn btn-danger" id="logoutBtn">退出管理</button>
+      </div>
     </div>
 
+    <!-- 添加成员 -->
     <div class="card">
-      <h2>➕ 添加成员</h2>
-      <input class="field" id="inputName" placeholder="姓名（必填）" />
-      <input class="field" id="inputRole" placeholder="职位" />
-      <input class="field" id="inputAvatar" placeholder="头像链接" />
-      <input class="field" id="inputBio" placeholder="简介" />
-      <button class="btn" id="addBtn">添加</button>
+      <h2>➕ 添加成员（管理员）</h2>
+      <div class="grid-2">
+        <div>
+          <input class="field" id="inputName" placeholder="姓名（必填）" />
+          <input class="field" id="inputRole" placeholder="职位" />
+        </div>
+        <div>
+          <input class="field" id="inputAvatar" placeholder="头像图片链接" />
+          <input class="field" id="inputBio" placeholder="简介" />
+        </div>
+      </div>
+      <button class="btn btn-success" id="addBtn">添加成员</button>
       <div class="status" id="addStatus"></div>
     </div>
 
-    <div class="card">
-      <h2>📋 成员列表</h2>
-      <div id="memberList"><div class="empty">加载中...</div></div>
-    </div>
+    <!-- 成员列表 + 评论列表 两列 -->
+    <div class="grid-2">
+      <!-- 成员列表 -->
+      <div class="card">
+        <h2>📋 成员列表 <span style="font-size:13px;color:#5a6f9a;font-weight:400;" id="memberCount"></span></h2>
+        <div id="memberList"><div class="empty">加载中...</div></div>
+      </div>
 
-    <div class="card">
-      <h2>💬 评论列表</h2>
-      <div id="commentList"><div class="empty">加载中...</div></div>
+      <!-- 评论列表 -->
+      <div class="card">
+        <h2>💬 评论列表 <span style="font-size:13px;color:#5a6f9a;font-weight:400;" id="commentCount"></span></h2>
+        <div id="commentList"><div class="empty">加载中...</div></div>
+      </div>
     </div>
 
     <a href="index.html" class="back-link">← 返回首页</a>
@@ -64,22 +99,86 @@
 
   <script>
     // ============================================================
-    //  config.js 已经加载了 supabase 对象
+    //  SUPABASE 配置（直接写在这里，不需要config.js）
     // ============================================================
+    const SUPABASE_URL = 'https://khnzvvyrpylcfhrqjycq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtobnp2dnlycHlsY2ZocnFqeWNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNjA3NzMsImV4cCI6MjA5OTkzNjc3M30.aN0UQV0jsFBCUDWxAWi-UtStaB62T95dWk7uHNz7jj0';
 
+    // 创建Supabase客户端
+    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    // 如果没有加载supabase，用备用方式
+    let supabaseClient;
+    if (supabase) {
+      supabaseClient = supabase;
+    } else {
+      // 如果CDN没加载，用rest方式
+      supabaseClient = {
+        from: (table) => ({
+          select: (cols) => ({
+            order: (col, opts) => ({
+              then: (cb) => fetch(`${SUPABASE_URL}/rest/v1/${table}?select=${cols || '*'}&order=${col}.desc`, {
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+              }).then(r => r.json()).then(data => cb({ data, error: null })).catch(err => cb({ data: null, error: err }))
+            })
+          }),
+          insert: (data) => ({
+            then: (cb) => fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+              method: 'POST',
+              headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            }).then(r => r.json()).then(data => cb({ data, error: null })).catch(err => cb({ data: null, error: err }))
+          }),
+          update: (data) => ({
+            eq: (field, value) => ({
+              then: (cb) => fetch(`${SUPABASE_URL}/rest/v1/${table}?${field}=eq.${value}`, {
+                method: 'PATCH',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+              }).then(r => r.json()).then(data => cb({ data, error: null })).catch(err => cb({ data: null, error: err }))
+            })
+          }),
+          delete: () => ({
+            eq: (field, value) => ({
+              then: (cb) => fetch(`${SUPABASE_URL}/rest/v1/${table}?${field}=eq.${value}`, {
+                method: 'DELETE',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+              }).then(() => cb({ data: null, error: null })).catch(err => cb({ data: null, error: err }))
+            })
+          })
+        })
+      };
+    }
+
+    // ============================================================
+    //  状态
+    // ============================================================
     let members = [];
     let comments = [];
 
+    // ============================================================
+    //  数据加载
+    // ============================================================
     async function loadMembers() {
-      const { data, error } = await supabase.from('members').select('*').order('created_at', { ascending: true });
-      if (error) { console.error(error); return []; }
-      return data || [];
+      try {
+        const result = await supabaseClient.from('members').select('*').order('created_at', { ascending: true });
+        if (result.error) throw result.error;
+        return result.data || [];
+      } catch (err) {
+        console.error('加载成员失败:', err);
+        return [];
+      }
     }
 
     async function loadComments() {
-      const { data, error } = await supabase.from('comments').select('*').order('created_at', { ascending: false });
-      if (error) { console.error(error); return []; }
-      return data || [];
+      try {
+        const result = await supabaseClient.from('comments').select('*').order('created_at', { ascending: false });
+        if (result.error) throw result.error;
+        return result.data || [];
+      } catch (err) {
+        console.error('加载评论失败:', err);
+        return [];
+      }
     }
 
     async function refresh() {
@@ -89,33 +188,49 @@
       renderComments();
     }
 
+    // ============================================================
+    //  渲染
+    // ============================================================
     function renderMembers() {
       const list = document.getElementById('memberList');
+      document.getElementById('memberCount').textContent = `(${members.length})`;
+      
       if (!members.length) {
         list.innerHTML = '<div class="empty">暂无成员</div>';
         return;
       }
+      
       let html = '';
       members.forEach(m => {
+        const avatar = m.avatar_url || `https://api.dicebear.com/6.x/fun-emoji/svg?seed=${encodeURIComponent(m.name)}`;
+        const commentCount = comments.filter(c => c.member_id === m.id).length;
+        
         html += `
           <div class="member-item">
             <div class="info">
-              <strong>${m.name}</strong>
-              <small>${m.role || '成员'}</small>
-              <br /><small>${m.bio ? m.bio.slice(0, 40) + (m.bio.length > 40 ? '...' : '') : ''}</small>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <strong>${m.name}</strong>
+                <span class="badge">💬 ${commentCount}</span>
+                <span style="font-size:12px;color:#5a6f9a;">${m.role || '成员'}</span>
+              </div>
+              <div class="bio-preview">${m.bio ? m.bio.slice(0, 50) + (m.bio.length > 50 ? '...' : '') : '暂无简介'}</div>
             </div>
             <div class="actions">
-              <button class="btn btn-edit" onclick="startEdit('${m.id}')">编辑</button>
-              <button class="btn btn-danger" onclick="deleteMember('${m.id}')">删除</button>
+              <button class="btn btn-edit" onclick="startEdit('${m.id}')">✏️</button>
+              <button class="btn btn-danger" onclick="deleteMember('${m.id}')">🗑️</button>
             </div>
           </div>
           <div class="edit-form" id="editForm_${m.id}">
-            <input class="field" id="editName_${m.id}" value="${m.name || ''}" placeholder="姓名" />
-            <input class="field" id="editRole_${m.id}" value="${m.role || ''}" placeholder="职位" />
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <input class="field" id="editName_${m.id}" value="${m.name || ''}" placeholder="姓名" />
+              <input class="field" id="editRole_${m.id}" value="${m.role || ''}" placeholder="职位" />
+            </div>
             <input class="field" id="editAvatar_${m.id}" value="${m.avatar_url || ''}" placeholder="头像链接" />
             <input class="field" id="editBio_${m.id}" value="${m.bio || ''}" placeholder="简介" />
-            <button class="btn" onclick="saveEdit('${m.id}')">保存</button>
-            <button class="btn btn-danger" onclick="cancelEdit('${m.id}')">取消</button>
+            <div class="flex">
+              <button class="btn btn-success" onclick="saveEdit('${m.id}')">💾 保存</button>
+              <button class="btn btn-danger" onclick="cancelEdit('${m.id}')">取消</button>
+            </div>
           </div>
         `;
       });
@@ -124,28 +239,51 @@
 
     function renderComments() {
       const list = document.getElementById('commentList');
+      document.getElementById('commentCount').textContent = `(${comments.length})`;
+      
       if (!comments.length) {
         list.innerHTML = '<div class="empty">暂无评论</div>';
         return;
       }
+      
       let html = '';
-      comments.forEach(c => {
+      const topComments = comments.filter(c => !c.parent_id);
+      const replies = comments.filter(c => c.parent_id);
+      
+      // 显示最近的10条顶级评论
+      const display = topComments.slice(0, 20);
+      
+      display.forEach(c => {
         const m = members.find(x => x.id === c.member_id);
-        const name = m ? m.name : '已删除';
+        const targetName = m ? m.name : '已删除';
+        const replyCount = replies.filter(r => r.parent_id === c.id).length;
+        
         html += `
-          <div class="member-item">
-            <div class="info">
-              <strong>${c.author || '匿名'}</strong> → ${name}
-              <br /><small>${c.content}</small>
-              <br /><small style="color:#5a6f9a;font-size:12px;">${new Date(c.created_at).toLocaleString()}</small>
+          <div class="comment-item">
+            <div class="meta">
+              <span class="author">${c.author || '匿名'}</span>
+              <span class="target">→ ${targetName}</span>
+              <span class="time">${new Date(c.created_at).toLocaleString()}</span>
             </div>
-            <button class="btn btn-danger" onclick="deleteComment('${c.id}')">删除</button>
+            <div class="content">${c.content}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;flex-wrap:wrap;gap:4px;">
+              <span style="font-size:12px;color:#5a6f9a;">${replyCount ? '💬 ' + replyCount + ' 条回复' : ''}</span>
+              <button class="btn btn-danger" style="padding:2px 12px;font-size:12px;" onclick="deleteComment('${c.id}')">删除</button>
+            </div>
           </div>
         `;
       });
-      list.innerHTML = html;
+      
+      if (topComments.length > 20) {
+        html += `<div class="empty" style="padding:8px 0;">还有 ${topComments.length - 20} 条评论...</div>`;
+      }
+      
+      list.innerHTML = html || '<div class="empty">暂无评论</div>';
     }
 
+    // ============================================================
+    //  操作
+    // ============================================================
     window.startEdit = function(id) {
       document.getElementById('editForm_' + id).classList.add('show');
     };
@@ -160,61 +298,100 @@
       const role = document.getElementById('editRole_' + id).value.trim();
       const bio = document.getElementById('editBio_' + id).value.trim();
       const avatar_url = document.getElementById('editAvatar_' + id).value.trim();
-      const { error } = await supabase.from('members').update({
-        name,
-        role: role || null,
-        bio: bio || null,
-        avatar_url: avatar_url || null
-      }).eq('id', id);
-      if (error) { alert('修改失败：' + error.message); return; }
-      document.getElementById('editForm_' + id).classList.remove('show');
-      refresh();
+      
+      try {
+        const result = await supabaseClient.from('members').update({
+          name,
+          role: role || null,
+          bio: bio || null,
+          avatar_url: avatar_url || null
+        }).eq('id', id);
+        if (result.error) throw result.error;
+        document.getElementById('editForm_' + id).classList.remove('show');
+        refresh();
+      } catch (err) {
+        alert('修改失败：' + err.message);
+      }
     };
 
     window.deleteMember = async function(id) {
       if (!confirm('删除此成员及其所有评论？')) return;
-      await supabase.from('comments').delete().eq('member_id', id);
-      const { error } = await supabase.from('members').delete().eq('id', id);
-      if (error) { alert('删除失败：' + error.message); return; }
-      refresh();
+      try {
+        await supabaseClient.from('comments').delete().eq('member_id', id);
+        await supabaseClient.from('members').delete().eq('id', id);
+        refresh();
+      } catch (err) {
+        alert('删除失败：' + err.message);
+      }
     };
 
     window.deleteComment = async function(id) {
       if (!confirm('删除此评论？')) return;
-      const { error } = await supabase.from('comments').delete().eq('id', id);
-      if (error) { alert('删除失败：' + error.message); return; }
-      refresh();
+      try {
+        await supabaseClient.from('comments').delete().eq('id', id);
+        refresh();
+      } catch (err) {
+        alert('删除失败：' + err.message);
+      }
     };
 
+    // ============================================================
+    //  添加成员
+    // ============================================================
     document.getElementById('addBtn').addEventListener('click', async function() {
       const name = document.getElementById('inputName').value.trim();
       const role = document.getElementById('inputRole').value.trim();
       const bio = document.getElementById('inputBio').value.trim();
       const avatar_url = document.getElementById('inputAvatar').value.trim();
       const status = document.getElementById('addStatus');
-      if (!name) { status.textContent = '⚠️ 请填写姓名'; return; }
+      
+      if (!name) { 
+        status.textContent = '⚠️ 请填写姓名';
+        status.className = 'status error';
+        return; 
+      }
+      
       status.textContent = '⏳ 提交中...';
-      const { error } = await supabase.from('members').insert([{
-        id: 'member-' + Date.now(),
-        name,
-        role: role || null,
-        bio: bio || null,
-        avatar_url: avatar_url || null
-      }]);
-      if (error) { status.textContent = '❌ ' + error.message; return; }
-      status.textContent = '✅ 添加成功！';
-      document.getElementById('inputName').value = '';
-      document.getElementById('inputRole').value = '';
-      document.getElementById('inputBio').value = '';
-      document.getElementById('inputAvatar').value = '';
-      refresh();
+      status.className = 'status';
+      
+      try {
+        const result = await supabaseClient.from('members').insert([{
+          id: 'member_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          creator_id: 'admin_' + Date.now(),
+          name,
+          role: role || null,
+          bio: bio || null,
+          avatar_url: avatar_url || null
+        }]);
+        if (result.error) throw result.error;
+        
+        status.textContent = '✅ 添加成功！';
+        status.className = 'status';
+        document.getElementById('inputName').value = '';
+        document.getElementById('inputRole').value = '';
+        document.getElementById('inputBio').value = '';
+        document.getElementById('inputAvatar').value = '';
+        refresh();
+      } catch (err) {
+        status.textContent = '❌ ' + err.message;
+        status.className = 'status error';
+      }
     });
 
+    // ============================================================
+    //  退出
+    // ============================================================
     document.getElementById('logoutBtn').addEventListener('click', function() {
-      window.location.href = 'index.html';
+      if (confirm('退出管理后台？')) {
+        window.location.href = 'index.html';
+      }
     });
 
+    // ============================================================
+    //  启动
+    // ============================================================
     refresh();
+    console.log('✅ 管理后台已启动');
   </script>
 </body>
 </html>
