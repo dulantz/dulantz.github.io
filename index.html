@@ -619,51 +619,32 @@
     // ============================================================
     //  删除卡片（修复版 - 彻底删除）
     // ============================================================
-    async function deleteMemberHandler() {
-      if (!activeMemberId) return;
-      if (!confirm('确定要删除这张卡片吗？所有评论也会被删除！')) return;
+ // ============================================================
+//  删除卡片（彻底修复版 - 删除成功后刷新页面）
+// ============================================================
+async function deleteMemberHandler() {
+  if (!activeMemberId) return;
+  if (!confirm('确定要删除这张卡片吗？所有评论也会被删除！')) return;
 
-      const status = document.getElementById('editStatus');
-      status.textContent = '⏳ 删除中...';
-      status.className = 'status';
+  const status = document.getElementById('editStatus');
+  status.textContent = '⏳ 删除中...';
+  status.className = 'status';
 
-      try {
-        // 1. 从数据库删除
-        await deleteMember(activeMemberId);
+  try {
+    // 1. 从数据库删除
+    await deleteMember(activeMemberId);
 
-        // 2. 关闭弹窗
-        closeProfile();
+    // 2. 关闭弹窗
+    closeProfile();
 
-        // 3. 重新从数据库加载数据
-        await loadMembers();
-        await loadComments();
+    // 3. 直接刷新整个页面（最彻底的方式）
+    window.location.reload();
 
-        // 4. 清空网格并重新渲染
-        const grid = document.getElementById('memberGrid');
-        grid.innerHTML = '';
-        renderMembers();
-
-        // 5. 检查是否删除了自己的卡片
-        const existing = members.find(m => m.creator_id === currentCreatorId);
-        if (!existing && currentCreatorId) {
-          // 如果删除了自己的卡片，清除身份，允许重新创建
-          localStorage.removeItem('creatorId');
-          localStorage.removeItem('creatorName');
-          currentCreatorId = null;
-          currentCreatorName = null;
-          document.getElementById('creatorStatus').textContent = '📝 你还没有卡片，点击创建';
-          document.getElementById('creatorStatus').className = 'status';
-        }
-
-        status.textContent = '✅ 删除成功！';
-        status.className = 'status';
-
-      } catch (err) {
-        status.textContent = '❌ 删除失败：' + err.message;
-        status.className = 'status error';
-      }
-    }
-
+  } catch (err) {
+    status.textContent = '❌ 删除失败：' + err.message;
+    status.className = 'status error';
+  }
+}
     // ============================================================
     //  发表评论
     // ============================================================
