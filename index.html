@@ -16,7 +16,6 @@
     .btn-danger { background:linear-gradient(135deg,#ff6b6b,#ee5a24); color:#fff; }
     .btn-success { background:linear-gradient(135deg,#00b894,#00a86b); color:#fff; }
     .btn-admin { background:linear-gradient(135deg,#fdcb6e,#e17055); color:#fff; }
-    .btn-sm { padding:4px 12px; font-size:12px; }
     .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:18px; }
     .card { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:18px; padding:16px; cursor:pointer; transition:0.3s; position:relative; }
     .card:hover { background:rgba(255,255,255,0.14); transform:translateY(-2px); }
@@ -138,7 +137,6 @@
         
         <!-- 发表评论（仅创建者可见） -->
         <div id="commentInputArea" style="display:none;margin-top:8px;">
-          <input class="field" id="commentAuthor" placeholder="你的名字" />
           <textarea class="field" id="commentText" rows="2" placeholder="写下你的评论..."></textarea>
           <button class="btn" id="sendCommentBtn" style="margin-top:6px;">发送评论</button>
           <div class="status" id="commentStatus"></div>
@@ -180,6 +178,7 @@
     let comments = [];
     let activeMemberId = null;
     let currentCreatorId = localStorage.getItem('creatorId') || null;
+    let currentCreatorName = localStorage.getItem('creatorName') || null;
     let isAdmin = false;
     const ADMIN_PASSWORD = '777888';
 
@@ -237,6 +236,10 @@
       if (!currentCreatorId) {
         currentCreatorId = creatorId;
         localStorage.setItem('creatorId', currentCreatorId);
+      }
+      if (!currentCreatorName) {
+        currentCreatorName = data.name;
+        localStorage.setItem('creatorName', currentCreatorName);
       }
       
       const payload = {
@@ -360,7 +363,7 @@
             <span class="author">${c.author}</span>
             <span class="time">${new Date(c.created_at).toLocaleString()}</span>
           </div>
-          <div class="content">${c.content}</div>
+          <div class="content">：${c.content}</div>
           <div class="actions">
             <button class="reply-btn" data-id="${c.id}">💬 回复</button>
             ${canDelete ? `<button class="del" data-id="${c.id}" data-action="delete-comment">🗑️ 删除</button>` : ''}
@@ -373,7 +376,7 @@
             <div class="reply-item">
               <span style="color:#5ec8ff;font-weight:600;">${r.author}</span>
               <span style="font-size:12px;color:#8fb3ff;margin-left:8px;">${new Date(r.created_at).toLocaleString()}</span>
-              <div style="margin-top:2px;">${r.content}</div>
+              <div style="margin-top:2px;">：${r.content}</div>
               ${(currentCreatorId && r.creator_id === currentCreatorId) || isAdmin ? 
                 `<button class="del" style="background:none;border:none;color:#ff6b6b;cursor:pointer;font-size:12px;padding:2px 4px;" data-id="${r.id}" data-action="delete-comment">删除</button>` : ''}
             </div>
@@ -418,7 +421,7 @@
     //  评论操作
     // ============================================================
     async function submitReply(parentId, content) {
-      if (!currentCreatorId) {
+      if (!currentCreatorId || !currentCreatorName) {
         alert('请先创建你的卡片才能评论！');
         return;
       }
@@ -426,7 +429,7 @@
       try {
         await createComment({
           member_id: activeMemberId,
-          author: document.getElementById('commentAuthor').value.trim() || '我',
+          author: currentCreatorName,
           content: content,
           parent_id: parentId
         });
@@ -561,7 +564,6 @@
         document.getElementById('creatorStatus').textContent = '✅ 已创建卡片，点击可编辑';
         document.getElementById('creatorStatus').className = 'status';
         
-        // 刷新数据并关闭弹窗
         await refreshAll();
         closeCreateOverlay();
       } catch (err) {
@@ -597,7 +599,13 @@
         status.textContent = '✅ 保存成功！';
         status.className = 'status';
         
-        // 刷新数据并重新打开当前卡片
+        // 如果修改的是自己的卡片，更新本地名字
+        const member = members.find(m => m.id === activeMemberId);
+        if (member && member.creator_id === currentCreatorId) {
+          currentCreatorName = name;
+          localStorage.setItem('creatorName', currentCreatorName);
+        }
+        
         await refreshAll();
         if (activeMemberId) {
           openProfile(activeMemberId);
@@ -609,30 +617,47 @@
     }
 
     // ============================================================
-    //  删除卡片（修复版）
+    //  删除卡片（修复版 - 彻底删除）
     // ============================================================
     async function deleteMemberHandler() {
       if (!activeMemberId) return;
       if (!confirm('确定要删除这张卡片吗？所有评论也会被删除！')) return;
-      
+
       const status = document.getElementById('editStatus');
       status.textContent = '⏳ 删除中...';
       status.className = 'status';
-      
+
       try {
+        // 1. 从数据库删除
         await deleteMember(activeMemberId);
+
+        // 2. 关闭弹窗
+        closeProfile();
+
+        // 3. 重新从数据库加载数据
+        await loadMembers();
+        await loadComments();
+
+        // 4. 清空网格并重新渲染
+        const grid = document.getElementById('memberGrid');
+        grid.innerHTML = '';
+        renderMembers();
+
+        // 5. 检查是否删除了自己的卡片
+        const existing = members.find(m => m.creator_id === currentCreatorId);
+        if (!existing && currentCreatorId) {
+          // 如果删除了自己的卡片，清除身份，允许重新创建
+          localStorage.removeItem('creatorId');
+          localStorage.removeItem('creatorName');
+          currentCreatorId = null;
+          currentCreatorName = null;
+          document.getElementById('creatorStatus').textContent = '📝 你还没有卡片，点击创建';
+          document.getElementById('creatorStatus').className = 'status';
+        }
+
         status.textContent = '✅ 删除成功！';
         status.className = 'status';
-        
-        // 关闭弹窗
-        closeProfile();
-        
-        // 刷新数据（关键！）
-        await refreshAll();
-        
-        // 重新渲染卡片列表
-        renderMembers();
-        
+
       } catch (err) {
         status.textContent = '❌ 删除失败：' + err.message;
         status.className = 'status error';
@@ -644,12 +669,11 @@
     // ============================================================
     async function sendComment() {
       if (!activeMemberId) return;
-      if (!currentCreatorId) {
+      if (!currentCreatorId || !currentCreatorName) {
         alert('请先创建你的卡片才能评论！');
         return;
       }
       
-      const author = document.getElementById('commentAuthor').value.trim() || '我';
       const content = document.getElementById('commentText').value.trim();
       const status = document.getElementById('commentStatus');
       
@@ -665,7 +689,7 @@
       try {
         await createComment({
           member_id: activeMemberId,
-          author: author,
+          author: currentCreatorName,
           content: content,
           parent_id: null
         });
@@ -674,7 +698,6 @@
         status.className = 'status';
         document.getElementById('commentText').value = '';
         
-        // 刷新数据并重新渲染评论
         await refreshAll();
         if (activeMemberId) {
           renderComments();
@@ -743,6 +766,9 @@
         const existing = members.find(m => m.creator_id === currentCreatorId);
         if (existing) {
           document.getElementById('creatorStatus').textContent = '✅ 已创建卡片，点击可编辑';
+          document.getElementById('creatorStatus').className = 'status';
+        } else {
+          document.getElementById('creatorStatus').textContent = '📝 你还没有卡片，点击创建';
           document.getElementById('creatorStatus').className = 'status';
         }
       }
