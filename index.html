@@ -180,7 +180,6 @@
     let currentCreatorId = localStorage.getItem('creatorId') || null;
     let currentCreatorName = localStorage.getItem('creatorName') || null;
     let isAdmin = false;
-    const ADMIN_PASSWORD = '777888';
 
     // ============================================================
     //  Supabase REST 操作
@@ -301,6 +300,24 @@
       await supabaseFetch(`comments?id=eq.${id}`, {
         method: 'DELETE'
       });
+    }
+
+    // ============================================================
+    //  管理员密码验证（从Supabase获取）
+    // ============================================================
+    async function checkAdminPassword(inputPassword) {
+      try {
+        const data = await supabaseFetch('admins?select=password');
+        if (!data || data.length === 0) return false;
+        // 数据库中存的是 'sha256$777888'
+        const storedPassword = data[0].password;
+        // 用同样的方式加密用户输入的密码
+        const hashedInput = 'sha256$' + inputPassword;
+        return storedPassword === hashedInput;
+      } catch (err) {
+        console.error('验证密码失败:', err);
+        return false;
+      }
     }
 
     // ============================================================
@@ -617,64 +634,51 @@
     }
 
     // ============================================================
-    //  删除卡片（修复版 - 彻底删除）
+    //  删除卡片
     // ============================================================
- // ============================================================
-//  删除卡片（彻底修复版 - 删除成功后刷新页面）
-// ============================================================
-// ============================================================
-//  删除卡片（最终稳定版 — 不刷新页面，直接移除 DOM）
-// ============================================================
-async function deleteMemberHandler() {
-  if (!activeMemberId) return;
-  if (!confirm('确定要删除这张卡片吗？所有评论也会被删除！')) return;
+    async function deleteMemberHandler() {
+      if (!activeMemberId) return;
+      if (!confirm('确定要删除这张卡片吗？所有评论也会被删除！')) return;
 
-  const status = document.getElementById('editStatus');
-  status.textContent = '⏳ 删除中...';
-  status.className = 'status';
+      const status = document.getElementById('editStatus');
+      status.textContent = '⏳ 删除中...';
+      status.className = 'status';
 
-  try {
-    // 1. 从数据库删除
-    await deleteMember(activeMemberId);
+      try {
+        await deleteMember(activeMemberId);
 
-    // 2. 从内存 members 数组中移除
-    members = members.filter(m => m.id !== activeMemberId);
+        // 从内存中移除
+        members = members.filter(m => m.id !== activeMemberId);
 
-    // 3. 从 DOM 中移除对应的卡片元素
-    const grid = document.getElementById('memberGrid');
-    const cards = grid.querySelectorAll('.card');
-    for (const card of cards) {
-      // 通过卡片的点击事件绑定的 id 来判断（或者通过 data 属性）
-      // 简单做法：重新渲染整个列表（不刷新页面）
-      // 但为了更稳，直接重新渲染网格
-      renderMembers();
-    }
+        // 重新渲染
+        renderMembers();
 
-    // 4. 关闭弹窗
-    closeProfile();
+        // 关闭弹窗
+        closeProfile();
 
-    // 5. 更新创建状态（如果删的是自己的卡片）
-    if (currentCreatorId) {
-      const existing = members.find(m => m.creator_id === currentCreatorId);
-      if (!existing) {
-        // 自己的卡片被删了，清除本地身份
-        localStorage.removeItem('creatorId');
-        localStorage.removeItem('creatorName');
-        currentCreatorId = null;
-        currentCreatorName = null;
-        document.getElementById('creatorStatus').textContent = '📝 你还没有卡片，点击创建';
-        document.getElementById('creatorStatus').className = 'status';
+        // 如果删的是自己的卡片
+        if (currentCreatorId) {
+          const existing = members.find(m => m.creator_id === currentCreatorId);
+          if (!existing) {
+            localStorage.removeItem('creatorId');
+            localStorage.removeItem('creatorName');
+            currentCreatorId = null;
+            currentCreatorName = null;
+            document.getElementById('creatorStatus').textContent = '📝 你还没有卡片，点击创建';
+            document.getElementById('creatorStatus').className = 'status';
+          }
+        }
+
+        status.textContent = '✅ 删除成功！';
+        status.className = 'status';
+
+      } catch (err) {
+        status.textContent = '❌ 删除失败：' + err.message;
+        status.className = 'status error';
       }
     }
 
-    status.textContent = '✅ 删除成功！';
-    status.className = 'status';
-
-  } catch (err) {
-    status.textContent = '❌ 删除失败：' + err.message;
-    status.className = 'status error';
-  }
-}    // ============================================================
+    // ============================================================
     //  发表评论
     // ============================================================
     async function sendComment() {
@@ -736,20 +740,36 @@ async function deleteMemberHandler() {
       area.style.display = 'block';
     }
 
-    function adminLogin() {
+    async function adminLogin() {
       const password = document.getElementById('adminPassword').value.trim();
       const status = document.getElementById('adminStatus');
       
-      if (password === ADMIN_PASSWORD) {
-        isAdmin = true;
-        status.textContent = '✅ 管理员模式已开启！可修改所有数据';
-        status.className = 'status';
-        document.getElementById('adminLoginBtn').style.display = 'none';
-        document.getElementById('adminLogoutBtn').style.display = 'inline-block';
-        document.getElementById('adminPassword').value = '';
-        refreshAll();
-      } else {
-        status.textContent = '❌ 密码错误！';
+      if (!password) {
+        status.textContent = '⚠️ 请输入密码';
+        status.className = 'status error';
+        return;
+      }
+
+      status.textContent = '⏳ 验证中...';
+      status.className = 'status';
+
+      try {
+        const isValid = await checkAdminPassword(password);
+        
+        if (isValid) {
+          isAdmin = true;
+          status.textContent = '✅ 管理员模式已开启！可修改所有数据';
+          status.className = 'status';
+          document.getElementById('adminLoginBtn').style.display = 'none';
+          document.getElementById('adminLogoutBtn').style.display = 'inline-block';
+          document.getElementById('adminPassword').value = '';
+          refreshAll();
+        } else {
+          status.textContent = '❌ 密码错误！';
+          status.className = 'status error';
+        }
+      } catch (err) {
+        status.textContent = '❌ 验证失败：' + err.message;
         status.className = 'status error';
       }
     }
@@ -816,7 +836,7 @@ async function deleteMemberHandler() {
     // ============================================================
     refreshAll();
     console.log('✅ 页面已启动');
-    console.log('🔐 管理员密码: 777888');
+    console.log('🔐 管理员密码已加密存储');
   </script>
 </body>
 </html>
