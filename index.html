@@ -184,7 +184,7 @@
     const ADMIN_PASSWORD = '777888';
 
     // ============================================================
-    //  Supabase REST 操作（直接用fetch，不依赖SDK）
+    //  Supabase REST 操作
     // ============================================================
     async function supabaseFetch(endpoint, options = {}) {
       const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
@@ -208,7 +208,6 @@
       return response.json();
     }
 
-    // 获取所有成员
     async function loadMembers() {
       try {
         const data = await supabaseFetch('members?select=*&order=created_at.desc');
@@ -220,7 +219,6 @@
       }
     }
 
-    // 获取所有评论
     async function loadComments() {
       try {
         const data = await supabaseFetch('comments?select=*&order=created_at.asc');
@@ -232,7 +230,6 @@
       }
     }
 
-    // 创建成员
     async function createMember(data) {
       const newId = 'member_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
       const creatorId = currentCreatorId || ('creator_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
@@ -259,7 +256,6 @@
       return payload;
     }
 
-    // 更新成员
     async function updateMember(id, data) {
       await supabaseFetch(`members?id=eq.${id}`, {
         method: 'PATCH',
@@ -267,7 +263,6 @@
       });
     }
 
-    // 删除成员
     async function deleteMember(id) {
       await supabaseFetch(`comments?member_id=eq.${id}`, {
         method: 'DELETE'
@@ -277,7 +272,6 @@
       });
     }
 
-    // 创建评论
     async function createComment(data) {
       const newId = 'comment_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
       const payload = {
@@ -297,9 +291,7 @@
       return payload;
     }
 
-    // 删除评论
     async function deleteComment(id) {
-      // 先删除所有子回复
       await supabaseFetch(`comments?parent_id=eq.${id}`, {
         method: 'DELETE'
       });
@@ -309,7 +301,7 @@
     }
 
     // ============================================================
-    //  渲染成员
+    //  渲染函数
     // ============================================================
     function renderMembers() {
       const grid = document.getElementById('memberGrid');
@@ -326,7 +318,6 @@
         
         const avatar = member.avatar_url || `https://api.dicebear.com/6.x/fun-emoji/svg?seed=${encodeURIComponent(member.name)}`;
         const isOwner = currentCreatorId && member.creator_id === currentCreatorId;
-        
         const commentCount = comments.filter(c => c.member_id === member.id).length;
         
         card.innerHTML = `
@@ -342,9 +333,6 @@
       });
     }
 
-    // ============================================================
-    //  渲染评论
-    // ============================================================
     function renderComments() {
       const list = document.getElementById('commentList');
       const filtered = comments.filter(c => c.member_id === activeMemberId);
@@ -356,7 +344,6 @@
         return;
       }
       
-      // 构建评论树
       const topComments = filtered.filter(c => !c.parent_id);
       
       list.innerHTML = '';
@@ -395,7 +382,6 @@
         list.appendChild(div);
       });
       
-      // 绑定回复按钮事件
       document.querySelectorAll('.reply-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const id = this.dataset.id;
@@ -406,7 +392,6 @@
         });
       });
       
-      // 绑定回复提交事件
       document.querySelectorAll('.reply-submit').forEach(btn => {
         btn.addEventListener('click', function() {
           const parentId = this.dataset.id;
@@ -419,7 +404,6 @@
         });
       });
       
-      // 绑定删除评论事件
       document.querySelectorAll('[data-action="delete-comment"]').forEach(btn => {
         btn.addEventListener('click', function() {
           const id = this.dataset.id;
@@ -447,7 +431,9 @@
           parent_id: parentId
         });
         await refreshAll();
-        renderComments();
+        if (activeMemberId) {
+          renderComments();
+        }
       } catch (err) {
         alert('回复失败：' + err.message);
       }
@@ -457,14 +443,16 @@
       try {
         await deleteComment(id);
         await refreshAll();
-        renderComments();
+        if (activeMemberId) {
+          renderComments();
+        }
       } catch (err) {
         alert('删除失败：' + err.message);
       }
     }
 
     // ============================================================
-    //  打开详情
+    //  打开/关闭详情
     // ============================================================
     function openProfile(memberId) {
       const member = members.find(m => m.id === memberId);
@@ -566,17 +554,16 @@
       status.className = 'status';
 
       try {
-        const result = await createMember({ name, role, bio, avatar_url });
+        await createMember({ name, role, bio, avatar_url });
         
         status.textContent = '✅ 创建成功！';
         status.className = 'status';
         document.getElementById('creatorStatus').textContent = '✅ 已创建卡片，点击可编辑';
         document.getElementById('creatorStatus').className = 'status';
         
-        setTimeout(() => {
-          closeCreateOverlay();
-          refreshAll();
-        }, 600);
+        // 刷新数据并关闭弹窗
+        await refreshAll();
+        closeCreateOverlay();
       } catch (err) {
         status.textContent = '❌ ' + err.message;
         status.className = 'status error';
@@ -610,27 +597,45 @@
         status.textContent = '✅ 保存成功！';
         status.className = 'status';
         
-        setTimeout(() => {
-          refreshAll();
+        // 刷新数据并重新打开当前卡片
+        await refreshAll();
+        if (activeMemberId) {
           openProfile(activeMemberId);
-        }, 500);
+        }
       } catch (err) {
         status.textContent = '❌ ' + err.message;
         status.className = 'status error';
       }
     }
 
+    // ============================================================
+    //  删除卡片（修复版）
+    // ============================================================
     async function deleteMemberHandler() {
       if (!activeMemberId) return;
       if (!confirm('确定要删除这张卡片吗？所有评论也会被删除！')) return;
       
+      const status = document.getElementById('editStatus');
+      status.textContent = '⏳ 删除中...';
+      status.className = 'status';
+      
       try {
         await deleteMember(activeMemberId);
-        alert('删除成功');
+        status.textContent = '✅ 删除成功！';
+        status.className = 'status';
+        
+        // 关闭弹窗
         closeProfile();
-        refreshAll();
+        
+        // 刷新数据（关键！）
+        await refreshAll();
+        
+        // 重新渲染卡片列表
+        renderMembers();
+        
       } catch (err) {
-        alert('删除失败：' + err.message);
+        status.textContent = '❌ 删除失败：' + err.message;
+        status.className = 'status error';
       }
     }
 
@@ -669,10 +674,11 @@
         status.className = 'status';
         document.getElementById('commentText').value = '';
         
-        setTimeout(() => {
-          refreshAll();
+        // 刷新数据并重新渲染评论
+        await refreshAll();
+        if (activeMemberId) {
           renderComments();
-        }, 300);
+        }
       } catch (err) {
         status.textContent = '❌ ' + err.message;
         status.className = 'status error';
@@ -685,7 +691,6 @@
     function toggleAdmin() {
       const area = document.getElementById('adminLoginArea');
       if (isAdmin) {
-        // 退出管理
         isAdmin = false;
         document.getElementById('adminStatus').textContent = '已退出管理员模式';
         document.getElementById('adminStatus').className = 'status';
@@ -734,7 +739,6 @@
       await loadComments();
       renderMembers();
       
-      // 更新创建状态
       if (currentCreatorId) {
         const existing = members.find(m => m.creator_id === currentCreatorId);
         if (existing) {
